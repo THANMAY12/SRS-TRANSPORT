@@ -55,7 +55,7 @@ app.post("/send-quote", async (req, res) => {
     const { name, email, phone, service, pickup, drop } = req.body;
 
     await resend.emails.send({
-      from: "SRS Transport <srstransportco@gmail.com>",
+      from: "SRS Transport <thanmaygowdabj@gmail.com",
       to: process.env.EMAIL_USER,
       reply_to: email,
       subject: `New Quote - ${name}`,
