@@ -110,7 +110,43 @@ header nav a:hover {
   transform: translateY(-2px);
 }
 
-/* HERO SECTION*/
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo img {
+  width: 60px;
+  border-radius: 15px;
+}
+
+.logo-text {
+  font-size: 22px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 1px;
+}
+/* MOBILE VIEW */
+@media (max-width: 768px) {
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .logo {
+    flex: 1;
+  }
+
+  .logo-text {
+    text-align: left;
+  }
+
+
+}
+
 
 /* HERO SECTION */
 
