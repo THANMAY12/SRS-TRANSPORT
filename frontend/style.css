@@ -364,7 +364,9 @@ border-radius: 10px;
   line-height: 1.7;
   font-size: 15px;
 }/*  FOOTER*/
-
+.contact-box a{
+  color: #475569;
+}
 .footer {
   background: #0b1f44;
   color: #ffffff;
