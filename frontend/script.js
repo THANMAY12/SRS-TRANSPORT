@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       try {
-        await fetch("http://localhost:5000/send-quote", {
+        await fetch("https://srs-transport.onrender.com/send-quote", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email, phone, service, pickup, drop }),

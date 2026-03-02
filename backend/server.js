@@ -7,7 +7,7 @@ const { Resend } = require("resend");
 const app = express();
 app.use(
   cors({
-    origin: ["https://your-netlify-site.netlify.app"], 
+    origin: ["https://srstransport1.netlify.app/"], 
     methods: ["GET", "POST"],
   })
 );
