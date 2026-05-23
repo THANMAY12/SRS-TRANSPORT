@@ -319,7 +319,7 @@ header {
 /*HERO SECTION*/
 .hero {
   min-height: calc(100vh - var(--header-height));
-  background-image: linear-gradient(rgba(11, 26, 61, 0.4), rgba(11, 26, 61, 0.6)), url("images/truck.webp");
+  background-image: linear-gradient(rgba(11, 26, 61,0), rgba(11, 26, 61, 0)), url("images/truck.webp");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
