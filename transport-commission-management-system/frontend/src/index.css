@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+
+  body, #root {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide navigation, sidebar, headers, controls, modals, and non-printable elements */
+  aside,
+  header,
+  .no-print,
+  button,
+  input,
+  select,
+  [role="dialog"],
+  .fixed,
+  .backdrop-blur-xs,
+  .sticky {
+    display: none !important;
+  }
+
+  /* Ensure main container takes full width */
+  main {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Force containers to clean white with visible borders */
+  .bg-white,
+  .dark\:bg-slate-900,
+  .bg-slate-900,
+  .bg-slate-950,
+  .bg-gradient-to-r {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  /* Force text colors to readable black */
+  h1, h2, h3, h4, p, span, td, th, div {
+    color: #0f172a !important;
+    text-shadow: none !important;
+  }
+
+  /* High contrast table styling for physical print */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 10px !important;
+    margin-top: 8px !important;
+  }
+
+  th, td {
+    border: 1px solid #94a3b8 !important;
+    padding: 6px 8px !important;
+    color: #0f172a !important;
+    text-align: left !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  thead th {
+    background-color: #e2e8f0 !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Show dedicated print document header when printing */
+  .print-only-header {
+    display: block !important;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #0f172a;
+  }
+}
+
+@media screen {
+  .print-only-header {
+    display: none !important;
+  }
+}

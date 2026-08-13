@@ -1,0 +1,6 @@
+{
+  "name": "Transport Commission Management System",
+  "description": "Enterprise transport commission tracking, daily trip entries, pending advances & balances, completed trip logs, worker & admin role management, audit logging, and export reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
