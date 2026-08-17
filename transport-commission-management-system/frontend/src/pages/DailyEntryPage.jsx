@@ -37,12 +37,31 @@ export const DailyEntryPage = ({
     transport: "",
     booking: "",
     commission: "",
+    commissionReceivedType: "",
     advanceReceivedAmount: "",
     advanceReceivedType: "",
     advancePaidAmount: "",
     advancePaidType: "",
     remarks: "",
   });
+
+  const isCommissionValid =
+    formData.commission !== "" &&
+    formData.commission !== null &&
+    formData.commission !== undefined &&
+    !isNaN(Number(formData.commission)) &&
+    Number(formData.commission) > 0;
+
+  const handleCommissionChange = (val) => {
+    const numVal = Number(val);
+    const isValid = val !== "" && val !== null && val !== undefined && !isNaN(numVal) && numVal > 0;
+
+    setFormData((prev) => ({
+      ...prev,
+      commission: val,
+      commissionReceivedType: isValid ? prev.commissionReceivedType : "",
+    }));
+  };
 
   const resetForm = () => {
     setFormData({
@@ -54,6 +73,7 @@ export const DailyEntryPage = ({
       transport: "",
       booking: "",
       commission: "",
+      commissionReceivedType: "",
       advanceReceivedAmount: "",
       advanceReceivedType: "",
       advancePaidAmount: "",
@@ -75,6 +95,7 @@ export const DailyEntryPage = ({
       transport: trip.transport,
       booking: trip.booking ? String(trip.booking) : "",
       commission: trip.commission !== null && trip.commission !== undefined ? String(trip.commission) : "",
+      commissionReceivedType: trip.commissionReceivedType || "",
       advanceReceivedAmount: trip.advanceReceivedAmount ? String(trip.advanceReceivedAmount) : "",
       advanceReceivedType: trip.advanceReceivedType || "",
       advancePaidAmount: trip.advancePaidAmount ? String(trip.advancePaidAmount) : "",
@@ -351,7 +372,7 @@ export const DailyEntryPage = ({
               <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
                 2. Freight & commission amounts
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                 <div>
                   <label htmlFor="field_freight" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
                     6. Freight (₹ Vehicle)
@@ -392,9 +413,33 @@ export const DailyEntryPage = ({
                     min="0"
                     placeholder="e.g. 2000"
                     value={formData.commission}
-                    onChange={(e) => setFormData({ ...formData, commission: e.target.value })}
+                    onChange={(e) => handleCommissionChange(e.target.value)}
                     className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold font-mono focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
                   />
+                </div>
+
+                <div>
+                  <label htmlFor="field_commissionReceivedType" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                    Commission Received Type
+                  </label>
+                  <select
+                    id="field_commissionReceivedType"
+                    disabled={!isCommissionValid}
+                    value={formData.commissionReceivedType}
+                    onChange={(e) => setFormData({ ...formData, commissionReceivedType: e.target.value })}
+                    className={`w-full px-3 py-1.5 border rounded-lg font-medium text-xs transition-colors ${
+                      !isCommissionValid
+                        ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
+                        : "bg-slate-50 border-slate-200 text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
+                    }`}
+                  >
+                    <option value="">
+                      {!isCommissionValid ? "-- Disabled (Enter Commission) --" : "-- Select type --"}
+                    </option>
+                    <option value="Cash">Cash</option>
+                    <option value="PhonePe">PhonePe</option>
+                    <option value="To Pay">To Pay</option>
+                  </select>
                 </div>
               </div>
             </div>
