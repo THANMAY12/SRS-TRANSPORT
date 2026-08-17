@@ -79,7 +79,7 @@ export const PendingCommissionPage = ({ trips, onUpdateTrip, globalSearch, setGl
         columns={columns}
         data={pendingTrips}
         headerBg="bg-amber-50/50"
-        emptyMessage="All trips have commission assigned! No pending commission entries."
+        emptyMessage="No pending commissions. All commission entries are currently up to date."
         renderRow={(trip) => {
           const daysPending = calculateDaysPending(trip.commissionDueDate || trip.date);
           return (

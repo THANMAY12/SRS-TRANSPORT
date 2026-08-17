@@ -269,7 +269,11 @@ export const Dashboard = ({
         <DataTable
           columns={columns}
           data={filteredTrips}
-          emptyMessage="No trip entries found matching your search term."
+          emptyMessage={
+            latestTrips.length === 0
+              ? "No transport entries yet. Create your first transport entry to begin tracking operations."
+              : "No trip entries found matching your search term."
+          }
           renderRow={(trip) => {
             const isComm = isPendingCommission(trip);
             const isAdvPaid = isPendingAdvanceVehicle(trip);

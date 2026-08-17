@@ -61,7 +61,7 @@ export const CompletedTripsPage = ({ trips, globalSearch, setGlobalSearch }) => 
         columns={columns}
         data={completedTrips}
         headerBg="bg-slate-50"
-        emptyMessage="No fully completed trips yet. Complete commission, advance payment types, and balances to archive records here."
+        emptyMessage="No completed trips yet."
         renderRow={(trip) => {
           const vehBal = getVehicleBalanceAmount(trip);
           const compBal = getCompanyBalanceAmount(trip);

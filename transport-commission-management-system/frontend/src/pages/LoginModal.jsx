@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-import { Truck, Shield, User, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Truck, User, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
 
 export const LoginModal = () => {
   const { login } = useAuth();
 
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("admin123");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -27,22 +27,6 @@ export const LoginModal = () => {
     }
   };
 
-  const handleQuickPreset = async (u, p) => {
-    setUsername(u);
-    setPassword(p);
-    setErrorMsg(null);
-    setIsLoading(true);
-
-    try {
-      const res = await api.login(u, p);
-      login(res.token, res.user);
-    } catch (err) {
-      setErrorMsg(err.message || "Login failed");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 bg-[#F7F8FA] flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-8 shadow-lg space-y-6">
@@ -57,33 +41,6 @@ export const LoginModal = () => {
           <p className="text-xs text-slate-500 font-medium">
             Internal Operations Portal • Secure Access
           </p>
-        </div>
-
-        {/* Quick Test Logins Section */}
-        <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
-          <p className="text-[10px] font-semibold uppercase text-slate-500 tracking-wider text-center">
-            Quick Test Credentials
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              id="login-preset-admin"
-              onClick={() => handleQuickPreset("admin", "admin123")}
-              className="py-1.5 px-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 rounded-lg text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <Shield className="h-3.5 w-3.5 text-blue-600" />
-              <span>Login Admin</span>
-            </button>
-            <button
-              type="button"
-              id="login-preset-worker"
-              onClick={() => handleQuickPreset("worker", "worker123")}
-              className="py-1.5 px-3 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 rounded-lg text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <User className="h-3.5 w-3.5 text-slate-600" />
-              <span>Login Worker</span>
-            </button>
-          </div>
         </div>
 
         {/* Error Alert */}

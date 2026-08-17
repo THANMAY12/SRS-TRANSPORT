@@ -106,7 +106,7 @@ export const AddWorkerModal = ({ isOpen, onClose, onSave }) => {
                 id="modal_worker_password"
                 type="password"
                 required
-                placeholder="e.g. worker123"
+                placeholder="e.g. SecurePassword#123"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"

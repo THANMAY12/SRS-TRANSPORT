@@ -78,42 +78,49 @@ export const NotificationDrawer = ({ isOpen, onClose, stats, onNavigatePage }) =
             </button>
           </div>
 
-          <div className="space-y-2.5">
-            {queues.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => {
-                    onNavigatePage(item.page);
-                    onClose();
-                  }}
-                  className={`p-3.5 rounded-lg border ${item.border} cursor-pointer transition-colors flex items-center justify-between group`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded bg-white border border-slate-200 text-slate-600 shadow-xs">
-                      <Icon className="h-4 w-4" />
+          {totalNeedsAttention === 0 ? (
+            <div className="p-6 text-center rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
+              <p className="text-xs font-bold text-slate-800">No pending actions</p>
+              <p className="text-[11px] text-slate-500">All operation queues are currently up to date.</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {queues.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      onNavigatePage(item.page);
+                      onClose();
+                    }}
+                    className={`p-3.5 rounded-lg border ${item.border} cursor-pointer transition-colors flex items-center justify-between group`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded bg-white border border-slate-200 text-slate-600 shadow-xs">
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-semibold text-slate-900">
+                          {item.title}
+                        </h4>
+                        <p className="text-[11px] text-slate-500">
+                          {item.description}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-xs font-semibold text-slate-900">
-                        {item.title}
-                      </h4>
-                      <p className="text-[11px] text-slate-500">
-                        {item.description}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-white border border-slate-200 font-bold text-xs font-mono text-slate-800">
-                      {item.count}
-                    </span>
-                    <ArrowRight className="h-3.5 w-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-white border border-slate-200 font-bold text-xs font-mono text-slate-800">
+                        {item.count}
+                      </span>
+                      <ArrowRight className="h-3.5 w-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <button

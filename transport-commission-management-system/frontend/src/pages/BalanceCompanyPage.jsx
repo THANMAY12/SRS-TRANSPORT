@@ -85,7 +85,7 @@ export const BalanceCompanyPage = ({ trips, onClearBalance, globalSearch, setGlo
         columns={columns}
         data={balanceCompanyTrips}
         headerBg="bg-slate-50"
-        emptyMessage="No active company balance collections exceeding ₹200 pending!"
+        emptyMessage="No outstanding company collections."
         renderRow={(trip) => {
           const balanceAmount = trip.booking - trip.advanceReceivedAmount;
           const daysPending = calculateDaysPending(trip.collectionDueDate || trip.date);

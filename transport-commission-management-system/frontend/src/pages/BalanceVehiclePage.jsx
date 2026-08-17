@@ -90,7 +90,7 @@ export const BalanceVehiclePage = ({ trips, onClearBalance, globalSearch, setGlo
         columns={columns}
         data={balanceVehicleTrips}
         headerBg="bg-slate-50"
-        emptyMessage="No active vehicle balances exceeding ₹200 pending clearance!"
+        emptyMessage="No outstanding vehicle balances."
         renderRow={(trip) => {
           const balanceAmount = trip.freight - trip.advancePaidAmount;
           const daysPending = calculateDaysPending(trip.advanceDueDate || trip.date);
