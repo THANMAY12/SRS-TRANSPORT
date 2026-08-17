@@ -1,4 +1,14 @@
-import { getAllTrips, isPendingCommission, isPendingAdvanceVehicle, isPendingAdvanceCompany, isBalanceVehicleActive, isBalanceCompanyActive, isCompletedTrip, getVehicleBalanceAmount, getCompanyBalanceAmount } from "./tripService.js";
+import {
+  getAllTrips,
+  isPendingCommission,
+  isPendingAdvanceVehicle,
+  isPendingAdvanceCompany,
+  isBalanceVehicleActive,
+  isBalanceCompanyActive,
+  isCompletedTrip,
+  getVehicleBalanceAmount,
+  getCompanyBalanceAmount,
+} from "./tripService.js";
 
 export async function getDashboardStats() {
   const allTrips = await getAllTrips();
@@ -8,18 +18,11 @@ export async function getDashboardStats() {
 
   const todayVehiclesCount = todayTrips.length;
   const todayFreightTotal = todayTrips.reduce((sum, t) => sum + t.freight, 0);
-  const todayCommissionTotal = todayTrips.reduce(
-    (sum, t) => sum + (t.commission || 0),
-    0,
-  );
+  const todayCommissionTotal = todayTrips.reduce((sum, t) => sum + (t.commission || 0), 0);
 
   const pendingCommissionCount = allTrips.filter(isPendingCommission).length;
-  const pendingVehicleAdvanceCount = allTrips.filter(
-    isPendingAdvanceVehicle,
-  ).length;
-  const pendingCompanyAdvanceCount = allTrips.filter(
-    isPendingAdvanceCompany,
-  ).length;
+  const pendingVehicleAdvanceCount = allTrips.filter(isPendingAdvanceVehicle).length;
+  const pendingCompanyAdvanceCount = allTrips.filter(isPendingAdvanceCompany).length;
 
   const balanceVehicleCount = allTrips.filter(isBalanceVehicleActive).length;
   const balanceCompanyCount = allTrips.filter(isBalanceCompanyActive).length;
@@ -65,12 +68,12 @@ export async function getReports(query) {
 
   if (vehicleNumber) {
     trips = trips.filter((t) =>
-      t.vehicleNumber.toLowerCase().includes(String(vehicleNumber).toLowerCase()),
+      t.vehicleNumber.toLowerCase().includes(String(vehicleNumber).toLowerCase())
     );
   }
   if (transport) {
     trips = trips.filter((t) =>
-      t.transport.toLowerCase().includes(String(transport).toLowerCase()),
+      t.transport.toLowerCase().includes(String(transport).toLowerCase())
     );
   }
 
@@ -79,8 +82,14 @@ export async function getReports(query) {
   const totalCommission = trips.reduce((sum, t) => sum + (t.commission || 0), 0);
   const totalAdvReceived = trips.reduce((sum, t) => sum + t.advanceReceivedAmount, 0);
   const totalAdvPaid = trips.reduce((sum, t) => sum + t.advancePaidAmount, 0);
-  const totalVehicleBalance = trips.reduce((sum, t) => sum + (isBalanceVehicleActive(t) ? getVehicleBalanceAmount(t) : 0), 0);
-  const totalCompanyBalance = trips.reduce((sum, t) => sum + (isBalanceCompanyActive(t) ? getCompanyBalanceAmount(t) : 0), 0);
+  const totalVehicleBalance = trips.reduce(
+    (sum, t) => sum + (isBalanceVehicleActive(t) ? getVehicleBalanceAmount(t) : 0),
+    0
+  );
+  const totalCompanyBalance = trips.reduce(
+    (sum, t) => sum + (isBalanceCompanyActive(t) ? getCompanyBalanceAmount(t) : 0),
+    0
+  );
 
   return {
     summary: {

@@ -38,10 +38,7 @@ function MainLayout() {
     if (!isAuthenticated) return;
     setIsRefreshing(true);
     try {
-      const [statsData, tripsData] = await Promise.all([
-        api.getDashboardStats(),
-        api.getTrips(),
-      ]);
+      const [statsData, tripsData] = await Promise.all([api.getDashboardStats(), api.getTrips()]);
       setStats(statsData);
       setTrips(tripsData);
 
@@ -104,23 +101,59 @@ function MainLayout() {
   }
 
   const pageTitles = {
-    dashboard: { title: "Dashboard Overview", subtitle: "Real-time transport metric cards & latest trips log" },
-    "daily-entry": { title: "Page 1 – Daily Entry Log", subtitle: "Auto-generated Sl.No & trip entries auto-saved" },
-    "pending-commission": { title: "Page 2 – Pending Commission", subtitle: "Trips requiring commission amount" },
-    "pending-advance-vehicle": { title: "Page 3 – Pending Advance Vehicle", subtitle: "Trips with missing vehicle advance payment type" },
-    "pending-advance-company": { title: "Page 4 – Pending Advance Company", subtitle: "Trips with missing company advance collection type" },
-    "balance-vehicle": { title: "Page 5 – Balance for Vehicle", subtitle: "Freight balances > ₹200 pending clearance" },
-    "balance-company": { title: "Page 6 – Balance from Company", subtitle: "Booking balances > ₹200 pending collection" },
-    completed: { title: "Page 7 – Completed Trips Archive", subtitle: "Fully settled transport trips" },
-    reports: { title: "Financial Reports & Analytics", subtitle: "Daily, weekly, monthly reports with Excel & PDF exports" },
-    "audit-logs": { title: "System Audit Trail", subtitle: "Complete history of user actions and database events" },
-    "manage-workers": { title: "Worker Accounts & Roles", subtitle: "Manage workers, passwords, and system permissions" },
+    dashboard: {
+      title: "Dashboard",
+      subtitle: "Today's transport operations and financial overview",
+    },
+    "daily-entry": {
+      title: "Daily entry log",
+      subtitle: "Auto-generated Sl.No & trip entries auto-saved",
+    },
+    "pending-commission": {
+      title: "Pending commission",
+      subtitle: "Trips requiring agent commission input",
+    },
+    "pending-advance-vehicle": {
+      title: "Pending vehicle advance",
+      subtitle: "Trips with missing vehicle advance payment type",
+    },
+    "pending-advance-company": {
+      title: "Pending company advance",
+      subtitle: "Trips with missing company advance collection type",
+    },
+    "balance-vehicle": {
+      title: "Vehicle balance (> ₹200)",
+      subtitle: "Freight balances > ₹200 pending clearance",
+    },
+    "balance-company": {
+      title: "Company balance (> ₹200)",
+      subtitle: "Booking balances > ₹200 pending collection",
+    },
+    completed: {
+      title: "Completed trips archive",
+      subtitle: "Fully settled transport trips",
+    },
+    reports: {
+      title: "Financial reports & analytics",
+      subtitle: "Daily, weekly, monthly reports with Excel & PDF exports",
+    },
+    "audit-logs": {
+      title: "System audit trail",
+      subtitle: "Complete history of user actions and database events",
+    },
+    "manage-workers": {
+      title: "Manage workers & credentials",
+      subtitle: "Manage workers, passwords, and system permissions",
+    },
   };
 
-  const currentHeaderInfo = pageTitles[activePage] || { title: "Transport Commission System", subtitle: "Private Logistics Management Portal" };
+  const currentHeaderInfo = pageTitles[activePage] || {
+    title: "Transport Commission System",
+    subtitle: "Private Logistics Management Portal",
+  };
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row antialiased selection:bg-blue-500 selection:text-white">
+    <div className="min-h-screen bg-[#F7F8FA] text-slate-900 flex flex-col lg:flex-row antialiased selection:bg-blue-600 selection:text-white">
       <Sidebar
         activePage={activePage}
         setActivePage={(p) => navigate(`/${p}`)}
@@ -145,17 +178,102 @@ function MainLayout() {
         <main className="flex-1 p-4 lg:p-8 max-w-7xl mx-auto w-full">
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard stats={stats} latestTrips={trips.slice(0, 20)} onNavigatePage={(p) => navigate(`/${p}`)} globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />} />
-            <Route path="/daily-entry" element={<DailyEntryPage trips={trips} nextSlNo={nextSlNo} onCreateTrip={handleCreateTrip} onUpdateTrip={handleUpdateTrip} onDeleteTrip={handleDeleteTrip} globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />} />
-            <Route path="/pending-commission" element={<PendingCommissionPage trips={trips} onUpdateTrip={handleUpdateTrip} globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />} />
-            <Route path="/pending-advance-vehicle" element={<PendingAdvanceVehiclePage trips={trips} onUpdateTrip={handleUpdateTrip} globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />} />
-            <Route path="/pending-advance-company" element={<PendingAdvanceCompanyPage trips={trips} onUpdateTrip={handleUpdateTrip} globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />} />
-            <Route path="/balance-vehicle" element={<BalanceVehiclePage trips={trips} onClearBalance={handleClearVehicleBalance} globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />} />
-            <Route path="/balance-company" element={<BalanceCompanyPage trips={trips} onClearBalance={handleClearCompanyBalance} globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />} />
-            <Route path="/completed" element={<CompletedTripsPage trips={trips} globalSearch={globalSearch} setGlobalSearch={setGlobalSearch} />} />
+            <Route
+              path="/dashboard"
+              element={
+                <Dashboard
+                  stats={stats}
+                  latestTrips={trips.slice(0, 20)}
+                  onNavigatePage={(p) => navigate(`/${p}`)}
+                  globalSearch={globalSearch}
+                  setGlobalSearch={setGlobalSearch}
+                />
+              }
+            />
+            <Route
+              path="/daily-entry"
+              element={
+                <DailyEntryPage
+                  trips={trips}
+                  nextSlNo={nextSlNo}
+                  onCreateTrip={handleCreateTrip}
+                  onUpdateTrip={handleUpdateTrip}
+                  onDeleteTrip={handleDeleteTrip}
+                  globalSearch={globalSearch}
+                  setGlobalSearch={setGlobalSearch}
+                />
+              }
+            />
+            <Route
+              path="/pending-commission"
+              element={
+                <PendingCommissionPage
+                  trips={trips}
+                  onUpdateTrip={handleUpdateTrip}
+                  globalSearch={globalSearch}
+                  setGlobalSearch={setGlobalSearch}
+                />
+              }
+            />
+            <Route
+              path="/pending-advance-vehicle"
+              element={
+                <PendingAdvanceVehiclePage
+                  trips={trips}
+                  onUpdateTrip={handleUpdateTrip}
+                  globalSearch={globalSearch}
+                  setGlobalSearch={setGlobalSearch}
+                />
+              }
+            />
+            <Route
+              path="/pending-advance-company"
+              element={
+                <PendingAdvanceCompanyPage
+                  trips={trips}
+                  onUpdateTrip={handleUpdateTrip}
+                  globalSearch={globalSearch}
+                  setGlobalSearch={setGlobalSearch}
+                />
+              }
+            />
+            <Route
+              path="/balance-vehicle"
+              element={
+                <BalanceVehiclePage
+                  trips={trips}
+                  onClearBalance={handleClearVehicleBalance}
+                  globalSearch={globalSearch}
+                  setGlobalSearch={setGlobalSearch}
+                />
+              }
+            />
+            <Route
+              path="/balance-company"
+              element={
+                <BalanceCompanyPage
+                  trips={trips}
+                  onClearBalance={handleClearCompanyBalance}
+                  globalSearch={globalSearch}
+                  setGlobalSearch={setGlobalSearch}
+                />
+              }
+            />
+            <Route
+              path="/completed"
+              element={
+                <CompletedTripsPage
+                  trips={trips}
+                  globalSearch={globalSearch}
+                  setGlobalSearch={setGlobalSearch}
+                />
+              }
+            />
             <Route path="/reports" element={<ReportsPage />} />
             {user?.role === "ADMIN" && <Route path="/audit-logs" element={<AuditLogPage />} />}
-            {user?.role === "ADMIN" && <Route path="/manage-workers" element={<ManageWorkersPage />} />}
+            {user?.role === "ADMIN" && (
+              <Route path="/manage-workers" element={<ManageWorkersPage />} />
+            )}
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>

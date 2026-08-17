@@ -1,14 +1,11 @@
-import React, { useState, useEffect } from "react";
-import {
-  FileSpreadsheet,
-  FileText,
-  Printer,
-  Filter,
-  RefreshCw,
-} from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { FileSpreadsheet, FileText, Filter, RefreshCw } from "lucide-react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { PageHeader } from "../components/ui/PageHeader";
+import { DataTable } from "../components/ui/DataTable";
+import { Toast } from "../components/ui/Toast";
 import { api } from "../services/api";
 import { formatCurrency, formatDate } from "../lib/utils";
 
@@ -20,12 +17,13 @@ export const ReportsPage = () => {
   const [transportFilter, setTransportFilter] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
+  const [toast, setToast] = useState(null);
   const [reportData, setReportData] = useState({
     summary: {},
     trips: [],
   });
 
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     setIsLoading(true);
     try {
       const params = {
@@ -39,14 +37,18 @@ export const ReportsPage = () => {
       setReportData(data);
     } catch (err) {
       console.error("Failed to fetch report:", err);
+      setToast({
+        type: "error",
+        message: "Failed to fetch report records.",
+      });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [reportPeriod, startDate, endDate, vehicleFilter, transportFilter]);
 
   useEffect(() => {
     fetchReport();
-  }, [reportPeriod, vehicleFilter, transportFilter]);
+  }, [fetchReport]);
 
   const handleApplyCustomDates = (e) => {
     e.preventDefault();
@@ -56,7 +58,7 @@ export const ReportsPage = () => {
   // Export to Excel
   const exportToExcel = () => {
     if (reportData.trips.length === 0) {
-      alert("No trip records available to export.");
+      setToast({ type: "error", message: "No trip records available to export." });
       return;
     }
 
@@ -83,14 +85,15 @@ export const ReportsPage = () => {
 
     XLSX.writeFile(
       workbook,
-      `Transport_Commission_Report_${reportPeriod}_${new Date().toISOString().split("T")[0]}.xlsx`,
+      `Transport_Commission_Report_${reportPeriod}_${new Date().toISOString().split("T")[0]}.xlsx`
     );
+    setToast({ type: "success", message: "Excel report exported successfully!" });
   };
 
   // Export to PDF
   const exportToPDF = () => {
     if (reportData.trips.length === 0) {
-      alert("No trip records available to export.");
+      setToast({ type: "error", message: "No trip records available to export." });
       return;
     }
 
@@ -98,7 +101,7 @@ export const ReportsPage = () => {
 
     // Title & Header
     doc.setFontSize(16);
-    doc.setTextColor(30, 58, 138); // Blue
+    doc.setTextColor(23, 32, 51);
     doc.text("Transport Commission Management Report", 14, 15);
 
     doc.setFontSize(9);
@@ -106,19 +109,19 @@ export const ReportsPage = () => {
     doc.text(
       `Generated on: ${new Date().toLocaleString("en-IN")} | Period: ${reportPeriod.toUpperCase()}`,
       14,
-      22,
+      22
     );
 
     // Summary Box
     const s = reportData.summary || {};
-    doc.setFillColor(240, 244, 255);
+    doc.setFillColor(247, 248, 250);
     doc.rect(14, 26, 268, 16, "F");
     doc.setFontSize(9);
     doc.setTextColor(0);
     doc.text(
       `Total Trips: ${s.totalTrips || 0}   |   Total Freight: ₹${(s.totalFreight || 0).toLocaleString("en-IN")}   |   Total Commission: ₹${(s.totalCommission || 0).toLocaleString("en-IN")}   |   Total Adv Paid: ₹${(s.totalAdvPaid || 0).toLocaleString("en-IN")}`,
       18,
-      36,
+      36
     );
 
     // Table Data
@@ -147,9 +150,7 @@ export const ReportsPage = () => {
       `₹${t.freight.toLocaleString("en-IN")}`,
       t.transport,
       `₹${t.booking.toLocaleString("en-IN")}`,
-      t.commission !== null
-        ? `₹${t.commission.toLocaleString("en-IN")}`
-        : "Pending",
+      t.commission !== null ? `₹${t.commission.toLocaleString("en-IN")}` : "Pending",
       `₹${t.advancePaidAmount.toLocaleString("en-IN")} (${t.advancePaidType || "N/A"})`,
       `₹${t.advanceReceivedAmount.toLocaleString("en-IN")} (${t.advanceReceivedType || "N/A"})`,
     ]);
@@ -160,7 +161,7 @@ export const ReportsPage = () => {
       startY: 46,
       theme: "grid",
       headStyles: {
-        fillColor: [30, 58, 138],
+        fillColor: [37, 99, 235],
         textColor: 255,
         fontSize: 8,
         fontStyle: "bold",
@@ -169,115 +170,116 @@ export const ReportsPage = () => {
       alternateRowStyles: { fillColor: [248, 250, 252] },
     });
 
-    doc.save(
-      `Transport_Report_${reportPeriod}_${new Date().toISOString().split("T")[0]}.pdf`,
-    );
-  };
-
-  const handlePrint = () => {
-    window.print();
+    doc.save(`Transport_Report_${reportPeriod}_${new Date().toISOString().split("T")[0]}.pdf`);
+    setToast({ type: "success", message: "PDF report exported successfully!" });
   };
 
   const s = reportData.summary || {};
 
+  const columns = [
+    { title: "Sl.No" },
+    { title: "Date" },
+    { title: "Vehicle" },
+    { title: "Route" },
+    { title: "Freight" },
+    { title: "Transport" },
+    { title: "Booking" },
+    { title: "Commission" },
+    { title: "Adv Received" },
+    { title: "Adv Paid" },
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-            Analytics & Reports
-          </span>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-            Transport Financial Reports
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Filter by Daily, Weekly, Monthly, Date Range, Vehicle, or Transport.
-            Export to Excel & PDF.
-          </p>
-        </div>
+    <div className="space-y-5">
+      {/* Page Header */}
+      <PageHeader
+        badgeText="Reporting & analytics"
+        title="Financial reports"
+        subtitle="Filter by daily, weekly, monthly, custom date range, vehicle, or transport. Export data to Excel & PDF."
+        printId="report-print-btn"
+        actions={
+          <div className="flex items-center gap-2">
+            <button
+              id="report-export-excel-btn"
+              onClick={exportToExcel}
+              className="px-3.5 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs flex items-center gap-1.5 transition-colors shrink-0"
+            >
+              <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+              <span>Excel Export</span>
+            </button>
+            <button
+              id="report-export-pdf-btn"
+              onClick={exportToPDF}
+              className="px-3.5 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-xs flex items-center gap-1.5 transition-colors shrink-0"
+            >
+              <FileText className="h-4 w-4 text-rose-600" />
+              <span>PDF Export</span>
+            </button>
+          </div>
+        }
+      />
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2">
-          <button
-            id="report-export-excel-btn"
-            onClick={exportToExcel}
-            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition-transform active:scale-95"
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            <span>Excel Export</span>
-          </button>
-
-          <button
-            id="report-export-pdf-btn"
-            onClick={exportToPDF}
-            className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md shadow-rose-600/20 flex items-center gap-1.5 transition-transform active:scale-95"
-          >
-            <FileText className="h-4 w-4" />
-            <span>PDF Export</span>
-          </button>
-
-          <button
-            id="report-print-btn"
-            onClick={handlePrint}
-            className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-xs flex items-center gap-1.5"
-          >
-            <Printer className="h-4 w-4" />
-            <span className="hidden sm:inline">Print</span>
-          </button>
-        </div>
-      </div>
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={() => setToast(null)}
+        />
+      )}
 
       {/* Filter Controls Bar */}
-      <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-3">
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 uppercase tracking-wider border-b border-slate-200 pb-2.5">
           <Filter className="h-4 w-4 text-blue-600" />
-          <span>Report Filters</span>
+          <span>Report filters</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3.5 text-xs">
           {/* Period Selector */}
           <div>
-            <label className="block font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase text-[10px]">
-              Report Period
+            <label htmlFor="field_reportPeriod" className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]">
+              Report period
             </label>
             <select
+              id="field_reportPeriod"
               value={reportPeriod}
               onChange={(e) => setReportPeriod(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
             >
-              <option value="daily">Daily Report (Today)</option>
-              <option value="weekly">Weekly Report (Last 7 Days)</option>
-              <option value="monthly">Monthly Report (Last 30 Days)</option>
-              <option value="custom">Custom Date Range</option>
+              <option value="daily">Daily report (Today)</option>
+              <option value="weekly">Weekly report (Last 7 days)</option>
+              <option value="monthly">Monthly report (Last 30 days)</option>
+              <option value="custom">Custom date range</option>
             </select>
           </div>
 
           {/* Vehicle Filter */}
           <div>
-            <label className="block font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase text-[10px]">
-              Vehicle Number
+            <label htmlFor="field_vehicleFilter" className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]">
+              Vehicle number
             </label>
             <input
+              id="field_vehicleFilter"
               type="text"
               placeholder="e.g. KA-01"
               value={vehicleFilter}
               onChange={(e) => setVehicleFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono uppercase font-bold focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-mono uppercase font-semibold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
             />
           </div>
 
           {/* Transport Filter */}
           <div>
-            <label className="block font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase text-[10px]">
-              Transport Name
+            <label htmlFor="field_transportFilter" className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]">
+              Transport name
             </label>
             <input
+              id="field_transportFilter"
               type="text"
               placeholder="e.g. VRL Logistics"
               value={transportFilter}
               onChange={(e) => setTransportFilter(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-bold focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
             />
           </div>
 
@@ -285,26 +287,28 @@ export const ReportsPage = () => {
           {reportPeriod === "custom" && (
             <>
               <div>
-                <label className="block font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase text-[10px]">
-                  Start Date
+                <label htmlFor="field_startDate" className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]">
+                  Start date
                 </label>
                 <input
+                  id="field_startDate"
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase text-[10px]">
-                  End Date
+                <label htmlFor="field_endDate" className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]">
+                  End date
                 </label>
                 <input
+                  id="field_endDate"
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
                 />
               </div>
             </>
@@ -312,137 +316,92 @@ export const ReportsPage = () => {
         </div>
 
         {reportPeriod === "custom" && (
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-end pt-1">
             <button
               onClick={handleApplyCustomDates}
-              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs"
+              className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs"
             >
-              Apply Date Range
+              Apply date range
             </button>
           </div>
         )}
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <p className="text-[10px] font-bold text-slate-400 uppercase">
-            Total Trips
-          </p>
-          <p className="text-xl font-black text-slate-900 dark:text-white mt-1">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase">Total trips</p>
+          <p className="text-2xl font-bold text-slate-900 font-mono mt-1">
             {s.totalTrips || 0}
           </p>
         </div>
 
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <p className="text-[10px] font-bold text-slate-400 uppercase">
-            Total Freight
-          </p>
-          <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase">Total freight</p>
+          <p className="text-2xl font-bold text-slate-900 font-mono mt-1">
             {formatCurrency(s.totalFreight)}
           </p>
         </div>
 
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <p className="text-[10px] font-bold text-slate-400 uppercase">
-            Total Commission
-          </p>
-          <p className="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase">Total commission</p>
+          <p className="text-2xl font-bold text-slate-900 font-mono mt-1">
             {formatCurrency(s.totalCommission)}
           </p>
         </div>
 
-        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <p className="text-[10px] font-bold text-slate-400 uppercase">
-            Total Booking
-          </p>
-          <p className="text-xl font-black text-indigo-600 dark:text-indigo-400 mt-1">
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase">Total booking</p>
+          <p className="text-2xl font-bold text-slate-900 font-mono mt-1">
             {formatCurrency(s.totalBooking)}
           </p>
         </div>
       </div>
 
       {/* Report Data Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-            Report Records ({reportData.trips.length})
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+            Report records ({reportData.trips.length})
           </h3>
           <button
             onClick={fetchReport}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-white"
+            className="p-1 rounded text-slate-500 hover:text-slate-800 flex items-center gap-1 text-xs"
           >
-            <RefreshCw
-              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
-            />
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th className="py-3 px-3">Sl.No</th>
-                <th className="py-3 px-3">Date</th>
-                <th className="py-3 px-3">Vehicle</th>
-                <th className="py-3 px-3">Route</th>
-                <th className="py-3 px-3">Freight</th>
-                <th className="py-3 px-3">Transport</th>
-                <th className="py-3 px-3">Booking</th>
-                <th className="py-3 px-3">Commission</th>
-                <th className="py-3 px-3">Adv Received</th>
-                <th className="py-3 px-3">Adv Paid</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-medium text-slate-800 dark:text-slate-200">
-              {reportData.trips.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="py-12 text-center text-slate-400">
-                    No records found for the selected report criteria.
-                  </td>
-                </tr>
-              ) : (
-                reportData.trips.map((t) => (
-                  <tr
-                    key={t.id}
-                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
-                  >
-                    <td className="py-3 px-3 font-bold text-blue-600">
-                      #{t.slNo}
-                    </td>
-                    <td className="py-3 px-3 whitespace-nowrap">
-                      {formatDate(t.date)}
-                    </td>
-                    <td className="py-3 px-3 font-mono font-bold">
-                      {t.vehicleNumber}
-                    </td>
-                    <td className="py-3 px-3 whitespace-nowrap">
-                      {t.fromLocation} → {t.toLocation}
-                    </td>
-                    <td className="py-3 px-3 font-bold">
-                      {formatCurrency(t.freight)}
-                    </td>
-                    <td className="py-3 px-3 truncate max-w-[120px]">
-                      {t.transport}
-                    </td>
-                    <td className="py-3 px-3">{formatCurrency(t.booking)}</td>
-                    <td className="py-3 px-3 font-bold text-emerald-600">
-                      {t.commission !== null
-                        ? formatCurrency(t.commission)
-                        : "Pending"}
-                    </td>
-                    <td className="py-3 px-3">
-                      {formatCurrency(t.advanceReceivedAmount)}
-                    </td>
-                    <td className="py-3 px-3">
-                      {formatCurrency(t.advancePaidAmount)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          columns={columns}
+          data={reportData.trips}
+          isLoading={isLoading}
+          emptyMessage="No records found for the selected report criteria."
+          renderRow={(t) => (
+            <tr
+              key={t.id}
+              className="hover:bg-slate-50 transition-colors border-b border-slate-100"
+            >
+              <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">#{t.slNo}</td>
+              <td className="py-2.5 px-3.5 whitespace-nowrap">{formatDate(t.date)}</td>
+              <td className="py-2.5 px-3.5 font-mono font-semibold">{t.vehicleNumber}</td>
+              <td className="py-2.5 px-3.5 whitespace-nowrap">
+                {t.fromLocation} → {t.toLocation}
+              </td>
+              <td className="py-2.5 px-3.5 font-mono font-bold">{formatCurrency(t.freight)}</td>
+              <td className="py-2.5 px-3.5 truncate max-w-[120px] text-slate-700">{t.transport}</td>
+              <td className="py-2.5 px-3.5 font-mono text-slate-600">
+                {formatCurrency(t.booking)}
+              </td>
+              <td className="py-2.5 px-3.5 font-mono font-semibold text-slate-900">
+                {t.commission !== null ? formatCurrency(t.commission) : "Pending"}
+              </td>
+              <td className="py-2.5 px-3.5 font-mono">{formatCurrency(t.advanceReceivedAmount)}</td>
+              <td className="py-2.5 px-3.5 font-mono">{formatCurrency(t.advancePaidAmount)}</td>
+            </tr>
+          )}
+        />
       </div>
     </div>
   );

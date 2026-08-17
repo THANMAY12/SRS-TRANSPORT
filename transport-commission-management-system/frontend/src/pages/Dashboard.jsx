@@ -8,118 +8,123 @@ import {
   Scale,
   Landmark,
   CheckCircle2,
-  Search,
   Eye,
   ArrowRight,
-  TrendingUp,
-  Printer,
+  Plus,
 } from "lucide-react";
-import { formatCurrency, formatDate } from "../lib/utils";
+import { MetricCard } from "../components/ui/MetricCard";
+import { PageHeader } from "../components/ui/PageHeader";
+import { DataTable } from "../components/ui/DataTable";
+import { StatusBadge } from "../components/ui/StatusBadge";
+import { TripDetailModal } from "../components/modals/TripDetailModal";
+import {
+  formatCurrency,
+  formatDate,
+  isPendingCommission,
+  isPendingAdvanceVehicle,
+  isPendingAdvanceCompany,
+  isBalanceVehicleActive,
+  isBalanceCompanyActive,
+  isCompletedTrip,
+} from "../lib/utils";
 
 export const Dashboard = ({
   stats,
   latestTrips,
-  onSelectTrip,
   onNavigatePage,
   globalSearch,
   setGlobalSearch,
 }) => {
   const [selectedTripModal, setSelectedTripModal] = useState(null);
 
-  const cards = [
+  // Group 1: Today's Operations (Uniform corporate visual treatment)
+  const todayOperations = [
     {
       id: "today-vehicles",
-      title: "Today's Vehicles",
+      title: "Today's vehicles",
       value: stats?.todayVehiclesCount || 0,
-      subtext: "Vehicles entered today",
+      subtext: "Vehicles loaded today",
       icon: Truck,
-      color: "bg-blue-600 text-white",
-      border: "border-blue-200 dark:border-blue-900",
-      action: () => onNavigatePage("daily-entry"),
+      onClick: () => onNavigatePage("daily-entry"),
     },
     {
       id: "today-freight",
-      title: "Today's Freight",
+      title: "Today's freight",
       value: formatCurrency(stats?.todayFreightTotal || 0),
       subtext: "Total freight generated today",
       icon: IndianRupee,
-      color: "bg-indigo-600 text-white",
-      border: "border-indigo-200 dark:border-indigo-900",
-      action: () => onNavigatePage("reports"),
+      onClick: () => onNavigatePage("reports"),
     },
     {
       id: "today-commission",
-      title: "Today's Commission",
+      title: "Today's commission",
       value: formatCurrency(stats?.todayCommissionTotal || 0),
       subtext: "Commission earned today",
       icon: Coins,
-      color: "bg-emerald-600 text-white",
-      border: "border-emerald-200 dark:border-emerald-900",
-      action: () => onNavigatePage("reports"),
+      onClick: () => onNavigatePage("reports"),
     },
     {
-      id: "pending-commission",
-      title: "Pending Commission",
-      value: stats?.pendingCommissionCount || 0,
-      subtext: "Trips with missing commission",
-      icon: Clock,
-      color: "bg-amber-500 text-white",
-      border: "border-amber-200 dark:border-amber-900",
-      action: () => onNavigatePage("pending-commission"),
-    },
-    {
-      id: "pending-vehicle-advance",
-      title: "Pending Vehicle Advance",
-      value: stats?.pendingVehicleAdvanceCount || 0,
-      subtext: "Vehicle advance payment pending",
-      icon: Truck,
-      color: "bg-orange-500 text-white",
-      border: "border-orange-200 dark:border-orange-900",
-      action: () => onNavigatePage("pending-advance-vehicle"),
-    },
-    {
-      id: "pending-company-advance",
-      title: "Pending Company Advance",
-      value: stats?.pendingCompanyAdvanceCount || 0,
-      subtext: "Company advance collection pending",
-      icon: Building2,
-      color: "bg-cyan-600 text-white",
-      border: "border-cyan-200 dark:border-cyan-900",
-      action: () => onNavigatePage("pending-advance-company"),
-    },
-    {
-      id: "balance-vehicle",
-      title: "Balance Vehicle",
-      value: stats?.balanceVehicleCount || 0,
-      subtext: "Freight balance > ₹200 pending",
-      icon: Scale,
-      color: "bg-purple-600 text-white",
-      border: "border-purple-200 dark:border-purple-900",
-      action: () => onNavigatePage("balance-vehicle"),
-    },
-    {
-      id: "balance-company",
-      title: "Balance Company",
-      value: stats?.balanceCompanyCount || 0,
-      subtext: "Booking balance > ₹200 pending",
-      icon: Landmark,
-      color: "bg-pink-600 text-white",
-      border: "border-pink-200 dark:border-pink-900",
-      action: () => onNavigatePage("balance-company"),
-    },
-    {
-      id: "completed-trips",
-      title: "Completed Trips Today",
+      id: "completed-today",
+      title: "Completed today",
       value: stats?.completedTripsTodayCount || 0,
       subtext: "Trips fully settled today",
       icon: CheckCircle2,
-      color: "bg-teal-600 text-white",
-      border: "border-teal-200 dark:border-teal-900",
-      action: () => onNavigatePage("completed"),
+      onClick: () => onNavigatePage("completed"),
     },
   ];
 
-  // Filter latest trips
+  // Group 2: Pending Work (Subtle warning treatment)
+  const pendingWork = [
+    {
+      id: "pending-commission",
+      title: "Pending commission",
+      value: stats?.pendingCommissionCount || 0,
+      subtext: "Trips missing commission",
+      icon: Clock,
+      variant: "warning",
+      onClick: () => onNavigatePage("pending-commission"),
+    },
+    {
+      id: "pending-vehicle-advance",
+      title: "Pending vehicle advance",
+      value: stats?.pendingVehicleAdvanceCount || 0,
+      subtext: "Vehicle advance type pending",
+      icon: Truck,
+      variant: "warning",
+      onClick: () => onNavigatePage("pending-advance-vehicle"),
+    },
+    {
+      id: "pending-company-advance",
+      title: "Pending company advance",
+      value: stats?.pendingCompanyAdvanceCount || 0,
+      subtext: "Company collection type pending",
+      icon: Building2,
+      variant: "warning",
+      onClick: () => onNavigatePage("pending-advance-company"),
+    },
+  ];
+
+  // Group 3: Outstanding Balances
+  const outstandingBalances = [
+    {
+      id: "balance-vehicle",
+      title: "Vehicle balance (> ₹200)",
+      value: stats?.balanceVehicleCount || 0,
+      subtext: "Vehicle balances pending clearance",
+      icon: Scale,
+      onClick: () => onNavigatePage("balance-vehicle"),
+    },
+    {
+      id: "balance-company",
+      title: "Company balance (> ₹200)",
+      value: stats?.balanceCompanyCount || 0,
+      subtext: "Company collections pending clearance",
+      icon: Landmark,
+      onClick: () => onNavigatePage("balance-company"),
+    },
+  ];
+
+  // Filter latest 20 trips
   const filteredTrips = latestTrips.filter((t) => {
     if (!globalSearch.trim()) return true;
     const q = globalSearch.toLowerCase().trim();
@@ -133,308 +138,204 @@ export const Dashboard = ({
     );
   });
 
+  const columns = [
+    { title: "Sl.No" },
+    { title: "Date" },
+    { title: "Vehicle Number" },
+    { title: "Route" },
+    { title: "Freight" },
+    { title: "Booking" },
+    { title: "Commission" },
+    { title: "Transport" },
+    { title: "Status" },
+    { title: "Action", align: "center" },
+  ];
+
+  const totalPendingItems =
+    (stats?.pendingCommissionCount || 0) +
+    (stats?.pendingVehicleAdvanceCount || 0) +
+    (stats?.pendingCompanyAdvanceCount || 0);
+
+  const totalBalanceItems =
+    (stats?.balanceVehicleCount || 0) + (stats?.balanceCompanyCount || 0);
+
   return (
-    <div className="space-y-6">
-      {/* Overview Banner */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white rounded-2xl p-6 shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-semibold mb-2">
-              <TrendingUp className="h-3.5 w-3.5" /> Live Operational Overview
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              Transport Commission Dashboard
-            </h1>
-            <p className="text-xs text-slate-300 mt-1 max-w-xl">
-              Track daily freight entries, pending advances, vehicle/company
-              balances, and completed trips in real-time.
-            </p>
-          </div>
+    <div className="space-y-5">
+      {/* Page Header */}
+      <PageHeader
+        badgeText="Operations overview"
+        title="Dashboard"
+        subtitle="Today's transport operations, financial activity, and pending action queues."
+        searchPlaceholder="Search Sl.No, Vehicle, Transport..."
+        searchValue={globalSearch}
+        onSearchChange={setGlobalSearch}
+        printId="dash-print-btn"
+        actions={
           <button
             id="dash-add-trip-btn"
             onClick={() => onNavigatePage("daily-entry")}
-            className="self-start md:self-auto px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/30 flex items-center gap-2 transition-transform active:scale-95"
+            className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs flex items-center gap-1.5 transition-colors shrink-0"
           >
+            <Plus className="h-4 w-4" />
             <span>+ New Trip Entry</span>
           </button>
+        }
+      />
+
+      {/* Row 1: Today's Operational Metrics */}
+      <div>
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5">
+          Today's operational metrics
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {todayOperations.map((card) => (
+            <MetricCard key={card.id} {...card} />
+          ))}
         </div>
       </div>
 
-      {/* 9 Metric Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
-        {cards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div
-              key={card.id}
-              id={`card-${card.id}`}
-              onClick={card.action}
-              className={`p-5 rounded-xl bg-white dark:bg-slate-900 border ${card.border} shadow-xs hover:shadow-md transition-all cursor-pointer group hover:-translate-y-0.5`}
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  {card.title}
-                </p>
-                <div
-                  className={`p-2.5 rounded-xl ${card.color} shadow-sm group-hover:scale-110 transition-transform`}
-                >
-                  <Icon className="h-5 w-5" />
-                </div>
-              </div>
-              <div className="mt-3">
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                  {card.value}
-                </h3>
-                <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">
-                  {card.subtext}
-                </p>
-              </div>
-            </div>
-          );
-        })}
+      {/* Row 2 & 3: Pending Work & Outstanding Balances */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        {/* Left Column: Pending Work (3 cards) */}
+        <div className="lg:col-span-3 space-y-2.5">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            Pending work
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            {pendingWork.map((card) => (
+              <MetricCard key={card.id} {...card} />
+            ))}
+          </div>
+        </div>
+
+        {/* Right Column: Outstanding Balances (2 cards) */}
+        <div className="lg:col-span-2 space-y-2.5">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            Outstanding balances (&gt; ₹200)
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {outstandingBalances.map((card) => (
+              <MetricCard key={card.id} {...card} />
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Latest 20 Trips Section */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-        {/* Table Header Controls */}
-        <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              Latest 20 Trips
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Recent transport entries with auto-calculated workflow status
-            </p>
-          </div>
+      {/* Operational Queue Summary */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+        <div>
+          <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+            <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
+            Operational queue summary
+          </h3>
+          <p className="text-slate-500 mt-0.5">
+            {totalPendingItems} trips requiring pending input details • {totalBalanceItems} active balances exceeding ₹200.
+          </p>
+        </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-              <input
-                id="dash-table-search-input"
-                type="text"
-                placeholder="Search Sl.No, Vehicle, Transport, From, To..."
-                value={globalSearch}
-                onChange={(e) => setGlobalSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {(stats?.pendingCommissionCount || 0) > 0 && (
             <button
-              id="dash-print-btn"
-              onClick={() => window.print()}
-              className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-xs flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 transition-colors shrink-0"
-              title="Print Dashboard View"
+              onClick={() => onNavigatePage("pending-commission")}
+              className="px-2.5 py-1 rounded bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium flex items-center gap-1 hover:bg-amber-100 transition-colors"
             >
-              <Printer className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-              <span className="hidden sm:inline">Print</span>
+              <span>Pending commission ({stats.pendingCommissionCount})</span>
+              <ArrowRight className="h-3 w-3" />
             </button>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th className="py-3.5 px-4">Sl.No</th>
-                <th className="py-3.5 px-4">Date</th>
-                <th className="py-3.5 px-4">Vehicle Number</th>
-                <th className="py-3.5 px-4">Route</th>
-                <th className="py-3.5 px-4">Freight</th>
-                <th className="py-3.5 px-4">Booking</th>
-                <th className="py-3.5 px-4">Commission</th>
-                <th className="py-3.5 px-4">Transport</th>
-                <th className="py-3.5 px-4 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-medium text-slate-800 dark:text-slate-200">
-              {filteredTrips.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400">
-                    No matching trip records found.
-                  </td>
-                </tr>
-              ) : (
-                filteredTrips.map((trip) => (
-                  <tr
-                    key={trip.id}
-                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
-                  >
-                    <td className="py-3.5 px-4 font-bold text-blue-600 dark:text-blue-400">
-                      #{trip.slNo}
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      {formatDate(trip.date)}
-                    </td>
-                    <td className="py-3.5 px-4 font-bold tracking-wider">
-                      <span className="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-[11px]">
-                        {trip.vehicleNumber}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                        <span>{trip.fromLocation}</span>
-                        <ArrowRight className="h-3 w-3 text-slate-400" />
-                        <span>{trip.toLocation}</span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-white">
-                      {formatCurrency(trip.freight)}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400">
-                      {formatCurrency(trip.booking)}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      {trip.commission !== null ? (
-                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                          {formatCurrency(trip.commission)}
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                          Pending
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-4 truncate max-w-[150px]">
-                      {trip.transport}
-                    </td>
-                    <td className="py-3.5 px-4 text-center">
-                      <button
-                        onClick={() => setSelectedTripModal(trip)}
-                        className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
-                        title="View Full Trip Details"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          )}
+          {(stats?.balanceVehicleCount || 0) > 0 && (
+            <button
+              onClick={() => onNavigatePage("balance-vehicle")}
+              className="px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-slate-800 text-xs font-medium flex items-center gap-1 hover:bg-slate-200 transition-colors"
+            >
+              <span>Vehicle balance ({stats.balanceVehicleCount})</span>
+              <ArrowRight className="h-3 w-3" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Trip Details Modal */}
-      {selectedTripModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-2xl p-6 shadow-2xl relative overflow-hidden">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
-              <div>
-                <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase">
-                  Trip Details #{selectedTripModal.slNo}
-                </span>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
-                  Vehicle: {selectedTripModal.vehicleNumber}
-                </h3>
-              </div>
-              <button
-                onClick={() => setSelectedTripModal(null)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg font-bold"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 py-4 text-xs">
-              <div>
-                <p className="text-slate-400 uppercase font-semibold text-[10px]">
-                  Date
-                </p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">
-                  {formatDate(selectedTripModal.date)}
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400 uppercase font-semibold text-[10px]">
-                  Transport
-                </p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">
-                  {selectedTripModal.transport}
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400 uppercase font-semibold text-[10px]">
-                  From Location
-                </p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">
-                  {selectedTripModal.fromLocation}
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400 uppercase font-semibold text-[10px]">
-                  To Location
-                </p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">
-                  {selectedTripModal.toLocation}
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400 uppercase font-semibold text-[10px]">
-                  Freight
-                </p>
-                <p className="font-bold text-emerald-600 dark:text-emerald-400">
-                  {formatCurrency(selectedTripModal.freight)}
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400 uppercase font-semibold text-[10px]">
-                  Booking
-                </p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">
-                  {formatCurrency(selectedTripModal.booking)}
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400 uppercase font-semibold text-[10px]">
-                  Commission
-                </p>
-                <p className="font-bold text-blue-600 dark:text-blue-400">
-                  {selectedTripModal.commission !== null
-                    ? formatCurrency(selectedTripModal.commission)
-                    : "Not Entered"}
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400 uppercase font-semibold text-[10px]">
-                  Advance Paid
-                </p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">
-                  {formatCurrency(selectedTripModal.advancePaidAmount)} (
-                  {selectedTripModal.advancePaidType || "Pending"})
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400 uppercase font-semibold text-[10px]">
-                  Advance Received
-                </p>
-                <p className="font-bold text-slate-800 dark:text-slate-200">
-                  {formatCurrency(selectedTripModal.advanceReceivedAmount)} (
-                  {selectedTripModal.advanceReceivedType || "Pending"})
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400 uppercase font-semibold text-[10px]">
-                  Remarks
-                </p>
-                <p className="font-medium text-slate-700 dark:text-slate-300">
-                  {selectedTripModal.remarks || "None"}
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
-              <button
-                onClick={() => setSelectedTripModal(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-xs"
-              >
-                Close
-              </button>
-            </div>
-          </div>
+      {/* Recent 20 Trips Table */}
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+            Latest trips log
+          </h3>
+          <span className="text-xs text-slate-500 font-normal">
+            Showing {filteredTrips.length} of {latestTrips.length} entries
+          </span>
         </div>
-      )}
+
+        <DataTable
+          columns={columns}
+          data={filteredTrips}
+          emptyMessage="No trip entries found matching your search term."
+          renderRow={(trip) => {
+            const isComm = isPendingCommission(trip);
+            const isAdvPaid = isPendingAdvanceVehicle(trip);
+            const isAdvRec = isPendingAdvanceCompany(trip);
+            const isVehBal = isBalanceVehicleActive(trip);
+            const isCompBal = isBalanceCompanyActive(trip);
+            const isComp = isCompletedTrip(trip);
+
+            return (
+              <tr
+                key={trip.id}
+                className="hover:bg-slate-50 transition-colors border-b border-slate-100"
+              >
+                <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">
+                  #{trip.slNo}
+                </td>
+                <td className="py-2.5 px-3.5 whitespace-nowrap">{formatDate(trip.date)}</td>
+                <td className="py-2.5 px-3.5 font-mono font-semibold">{trip.vehicleNumber}</td>
+                <td className="py-2.5 px-3.5 whitespace-nowrap">
+                  {trip.fromLocation} → {trip.toLocation}
+                </td>
+                <td className="py-2.5 px-3.5 font-bold text-slate-900 font-mono">
+                  {formatCurrency(trip.freight)}
+                </td>
+                <td className="py-2.5 px-3.5 font-mono text-slate-600">
+                  {formatCurrency(trip.booking)}
+                </td>
+                <td className="py-2.5 px-3.5 font-mono font-semibold text-slate-900">
+                  {trip.commission !== null ? formatCurrency(trip.commission) : "-"}
+                </td>
+                <td className="py-2.5 px-3.5 truncate max-w-[140px] text-slate-700">{trip.transport}</td>
+                <td className="py-2.5 px-3.5">
+                  {isComp ? (
+                    <StatusBadge type="completed" text="Completed" size="sm" />
+                  ) : isComm ? (
+                    <StatusBadge type="pending-commission" text="Pending comm" size="sm" />
+                  ) : isAdvPaid ? (
+                    <StatusBadge type="pending-advance-vehicle" text="Pending adv veh" size="sm" />
+                  ) : isAdvRec ? (
+                    <StatusBadge type="pending-advance-company" text="Pending adv comp" size="sm" />
+                  ) : isVehBal || isCompBal ? (
+                    <StatusBadge type="balance-due" text="Balance due" size="sm" />
+                  ) : (
+                    <StatusBadge type="completed" text="In progress" size="sm" />
+                  )}
+                </td>
+                <td className="py-2.5 px-3.5 text-center">
+                  <button
+                    onClick={() => setSelectedTripModal(trip)}
+                    className="p-1 rounded text-slate-500 hover:text-blue-700 hover:bg-slate-100 transition-colors"
+                    title="View details"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
+                </td>
+              </tr>
+            );
+          }}
+        />
+      </div>
+
+      {/* Trip Detail Modal */}
+      <TripDetailModal
+        trip={selectedTripModal}
+        onClose={() => setSelectedTripModal(null)}
+      />
     </div>
   );
 };

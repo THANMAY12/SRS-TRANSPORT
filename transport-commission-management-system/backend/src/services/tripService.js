@@ -100,9 +100,7 @@ export async function createTrip(body, user) {
   const freight = Number(body.freight) || 0;
   const booking = Number(body.booking) || 0;
   const commission =
-    body.commission !== null &&
-    body.commission !== undefined &&
-    body.commission !== ""
+    body.commission !== null && body.commission !== undefined && body.commission !== ""
       ? Number(body.commission)
       : null;
   const advanceReceivedAmount = Number(body.advanceReceivedAmount) || 0;
@@ -166,7 +164,8 @@ export async function updateTrip(id, body, user) {
 
   const updatedDate = body.date || existingTrip.date;
   const updatedVehicleNumber = (body.vehicleNumber || existingTrip.vehicleNumber).toUpperCase();
-  const updatedFrom = body.fromLocation !== undefined ? body.fromLocation : existingTrip.fromLocation;
+  const updatedFrom =
+    body.fromLocation !== undefined ? body.fromLocation : existingTrip.fromLocation;
   const updatedTo = body.toLocation !== undefined ? body.toLocation : existingTrip.toLocation;
   const updatedFreight = body.freight !== undefined ? Number(body.freight) : existingTrip.freight;
   const updatedTransport = body.transport !== undefined ? body.transport : existingTrip.transport;
@@ -179,31 +178,44 @@ export async function updateTrip(id, body, user) {
         : Number(body.commission)
       : existingTrip.commission;
 
-  const updatedAdvRecAmt = body.advanceReceivedAmount !== undefined ? Number(body.advanceReceivedAmount) : existingTrip.advanceReceivedAmount;
-  const updatedAdvRecType = body.advanceReceivedType !== undefined ? body.advanceReceivedType : existingTrip.advanceReceivedType;
-  const updatedAdvPaidAmt = body.advancePaidAmount !== undefined ? Number(body.advancePaidAmount) : existingTrip.advancePaidAmount;
-  const updatedAdvPaidType = body.advancePaidType !== undefined ? body.advancePaidType : existingTrip.advancePaidType;
+  const updatedAdvRecAmt =
+    body.advanceReceivedAmount !== undefined
+      ? Number(body.advanceReceivedAmount)
+      : existingTrip.advanceReceivedAmount;
+  const updatedAdvRecType =
+    body.advanceReceivedType !== undefined
+      ? body.advanceReceivedType
+      : existingTrip.advanceReceivedType;
+  const updatedAdvPaidAmt =
+    body.advancePaidAmount !== undefined
+      ? Number(body.advancePaidAmount)
+      : existingTrip.advancePaidAmount;
+  const updatedAdvPaidType =
+    body.advancePaidType !== undefined ? body.advancePaidType : existingTrip.advancePaidType;
   const updatedRemarks = body.remarks !== undefined ? body.remarks : existingTrip.remarks;
 
   const now = new Date().toISOString();
 
-  await Trip.updateOne({ id }, {
-    date: updatedDate,
-    vehicle_number: updatedVehicleNumber,
-    from_location: updatedFrom,
-    to_location: updatedTo,
-    freight: updatedFreight,
-    transport: updatedTransport,
-    booking: updatedBooking,
-    commission: updatedCommission,
-    advance_received_amount: updatedAdvRecAmt,
-    advance_received_type: updatedAdvRecType,
-    advance_paid_amount: updatedAdvPaidAmt,
-    advance_paid_type: updatedAdvPaidType,
-    remarks: updatedRemarks,
-    updated_at: now,
-    updated_by: user.username,
-  });
+  await Trip.updateOne(
+    { id },
+    {
+      date: updatedDate,
+      vehicle_number: updatedVehicleNumber,
+      from_location: updatedFrom,
+      to_location: updatedTo,
+      freight: updatedFreight,
+      transport: updatedTransport,
+      booking: updatedBooking,
+      commission: updatedCommission,
+      advance_received_amount: updatedAdvRecAmt,
+      advance_received_type: updatedAdvRecType,
+      advance_paid_amount: updatedAdvPaidAmt,
+      advance_paid_type: updatedAdvPaidType,
+      remarks: updatedRemarks,
+      updated_at: now,
+      updated_by: user.username,
+    }
+  );
 
   const updatedTrip = await getTripById(id);
 
@@ -226,12 +238,15 @@ export async function clearVehicleBalance(id, user) {
   }
 
   const nowStr = new Date().toISOString();
-  await Trip.updateOne({ id }, {
-    vehicle_balance_cleared: true,
-    vehicle_balance_cleared_date: nowStr,
-    updated_at: nowStr,
-    updated_by: user.username,
-  });
+  await Trip.updateOne(
+    { id },
+    {
+      vehicle_balance_cleared: true,
+      vehicle_balance_cleared_date: nowStr,
+      updated_at: nowStr,
+      updated_by: user.username,
+    }
+  );
 
   const updatedTrip = await getTripById(id);
 
@@ -254,12 +269,15 @@ export async function clearCompanyBalance(id, user) {
   }
 
   const nowStr = new Date().toISOString();
-  await Trip.updateOne({ id }, {
-    company_balance_cleared: true,
-    company_balance_cleared_date: nowStr,
-    updated_at: nowStr,
-    updated_by: user.username,
-  });
+  await Trip.updateOne(
+    { id },
+    {
+      company_balance_cleared: true,
+      company_balance_cleared_date: nowStr,
+      updated_at: nowStr,
+      updated_by: user.username,
+    }
+  );
 
   const updatedTrip = await getTripById(id);
 

@@ -21,7 +21,9 @@ export function authenticateToken(req, res, next) {
 
 export function requireAdmin(req, res, next) {
   if (!req.user || req.user.role !== ROLES.ADMIN) {
-    return res.status(403).json({ success: false, message: "Admin access required for this action" });
+    return res
+      .status(403)
+      .json({ success: false, message: "Admin access required for this action" });
   }
   next();
 }

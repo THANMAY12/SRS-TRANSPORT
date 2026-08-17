@@ -6,7 +6,8 @@
     margin: 10mm;
   }
 
-  body, #root {
+  body,
+  #root {
     background: #ffffff !important;
     color: #000000 !important;
     font-size: 11px !important;
@@ -49,7 +50,15 @@
   }
 
   /* Force text colors to readable black */
-  h1, h2, h3, h4, p, span, td, th, div {
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  span,
+  td,
+  th,
+  div {
     color: #0f172a !important;
     text-shadow: none !important;
   }
@@ -62,7 +71,8 @@
     margin-top: 8px !important;
   }
 
-  th, td {
+  th,
+  td {
     border: 1px solid #94a3b8 !important;
     padding: 6px 8px !important;
     color: #0f172a !important;

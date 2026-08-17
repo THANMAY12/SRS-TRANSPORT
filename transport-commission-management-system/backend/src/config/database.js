@@ -159,14 +159,14 @@ async function seedSampleTripsIfEmpty() {
         commission: 3000,
         advance_received_amount: 25000,
         advance_received_type: "PhonePe",
-        advance_paid_amount: 20000, 
+        advance_paid_amount: 20000,
         advance_paid_type: "Cash",
         remarks: "Electronics load",
         commission_due_date: fiveDaysAgo,
         advance_due_date: fiveDaysAgo,
         collection_due_date: fiveDaysAgo,
-        vehicle_balance_cleared: false, 
-        company_balance_cleared: false, 
+        vehicle_balance_cleared: false,
+        company_balance_cleared: false,
         created_at: fiveDaysAgo,
         updated_at: fiveDaysAgo,
         created_by: "admin",
@@ -182,7 +182,7 @@ export const connectDB = async () => {
   try {
     await mongoose.connect(config.mongoUri);
     console.log("Connected to MongoDB successfully");
-    
+
     await seedDefaultUsers();
     await seedSampleTripsIfEmpty();
   } catch (error) {

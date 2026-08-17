@@ -1,17 +1,5 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-} from "react";
-import {
-  api,
-  getStoredToken,
-  setStoredToken,
-  removeStoredToken,
-} from "../services/api";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import { api, getStoredToken, setStoredToken, removeStoredToken } from "../services/api";
 
 const AuthContext = createContext(undefined);
 
@@ -65,8 +53,7 @@ export const AuthProvider = ({ children }) => {
       logout();
     };
     window.addEventListener("auth:unauthorized", handleUnauthorized);
-    return () =>
-      window.removeEventListener("auth:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
   }, [logout]);
 
   // Verify initial token

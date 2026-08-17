@@ -11,7 +11,7 @@ export const login = async (req, res, next) => {
     const result = await authService.login(username, password);
     res.json({
       success: true,
-      ...result
+      ...result,
     });
   } catch (error) {
     if (error.message === "Invalid username or password") {

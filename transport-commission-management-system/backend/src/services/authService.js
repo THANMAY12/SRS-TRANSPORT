@@ -30,7 +30,7 @@ export async function login(username, password) {
 
   const nowStr = new Date().toISOString();
   await User.updateOne({ id: userObj.id }, { last_login: nowStr });
-  
+
   userObj.last_login = nowStr;
 
   const token = generateToken(userObj);
@@ -54,6 +54,6 @@ export async function login(username, password) {
       active: userObj.active,
       createdAt: userObj.created_at,
       lastLogin: nowStr,
-    }
+    },
   };
 }

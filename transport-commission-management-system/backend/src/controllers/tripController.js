@@ -2,7 +2,8 @@ import * as tripService from "../services/tripService.js";
 
 export const getTrips = async (req, res, next) => {
   try {
-    const { search, slNo, vehicleNumber, date, transport, fromLocation, toLocation, limit } = req.query;
+    const { search, slNo, vehicleNumber, date, transport, fromLocation, toLocation, limit } =
+      req.query;
 
     let trips = await tripService.getAllTrips();
 
@@ -20,11 +21,23 @@ export const getTrips = async (req, res, next) => {
     }
 
     if (slNo) trips = trips.filter((t) => String(t.slNo) === String(slNo));
-    if (vehicleNumber) trips = trips.filter((t) => t.vehicleNumber.toLowerCase().includes(String(vehicleNumber).toLowerCase()));
+    if (vehicleNumber)
+      trips = trips.filter((t) =>
+        t.vehicleNumber.toLowerCase().includes(String(vehicleNumber).toLowerCase())
+      );
     if (date) trips = trips.filter((t) => t.date === String(date));
-    if (transport) trips = trips.filter((t) => t.transport.toLowerCase().includes(String(transport).toLowerCase()));
-    if (fromLocation) trips = trips.filter((t) => t.fromLocation.toLowerCase().includes(String(fromLocation).toLowerCase()));
-    if (toLocation) trips = trips.filter((t) => t.toLocation.toLowerCase().includes(String(toLocation).toLowerCase()));
+    if (transport)
+      trips = trips.filter((t) =>
+        t.transport.toLowerCase().includes(String(transport).toLowerCase())
+      );
+    if (fromLocation)
+      trips = trips.filter((t) =>
+        t.fromLocation.toLowerCase().includes(String(fromLocation).toLowerCase())
+      );
+    if (toLocation)
+      trips = trips.filter((t) =>
+        t.toLocation.toLowerCase().includes(String(toLocation).toLowerCase())
+      );
 
     if (limit) {
       const l = parseInt(String(limit), 10);
@@ -96,7 +109,13 @@ export const getCompletedTrips = async (req, res, next) => {
 export const createTrip = async (req, res, next) => {
   try {
     const body = req.body;
-    if (!body.date || !body.vehicleNumber || !body.fromLocation || !body.toLocation || !body.transport) {
+    if (
+      !body.date ||
+      !body.vehicleNumber ||
+      !body.fromLocation ||
+      !body.toLocation ||
+      !body.transport
+    ) {
       res.status(400);
       throw new Error("Date, Vehicle Number, From, To, and Transport are required.");
     }

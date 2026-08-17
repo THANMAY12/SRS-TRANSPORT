@@ -71,10 +71,8 @@ export const api = {
   },
 
   getPendingCommissionTrips: () => request("/api/trips/pending-commission"),
-  getPendingAdvanceVehicleTrips: () =>
-    request("/api/trips/pending-advance-vehicle"),
-  getPendingAdvanceCompanyTrips: () =>
-    request("/api/trips/pending-advance-company"),
+  getPendingAdvanceVehicleTrips: () => request("/api/trips/pending-advance-vehicle"),
+  getPendingAdvanceCompanyTrips: () => request("/api/trips/pending-advance-company"),
   getBalanceVehicleTrips: () => request("/api/trips/balance-vehicle"),
   getBalanceCompanyTrips: () => request("/api/trips/balance-company"),
   getCompletedTrips: () => request("/api/trips/completed"),
