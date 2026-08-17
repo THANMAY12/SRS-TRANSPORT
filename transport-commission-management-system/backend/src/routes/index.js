@@ -1,4 +1,5 @@
 import { Router } from "express";
+import healthRoutes from "./healthRoutes.js";
 import authRoutes from "./authRoutes.js";
 import tripRoutes from "./tripRoutes.js";
 import workerRoutes from "./workerRoutes.js";
@@ -11,9 +12,7 @@ import { authenticateToken, requireAdmin } from "../middleware/authMiddleware.js
 
 const router = Router();
 
-router.get("/health", (req, res) => {
-  res.json({ status: "ok", time: new Date().toISOString() });
-});
+router.use("/health", healthRoutes);
 
 router.use("/auth", authRoutes);
 router.use("/trips", tripRoutes);

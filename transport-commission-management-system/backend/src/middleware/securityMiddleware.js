@@ -1,10 +1,30 @@
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
+import { config } from "../config/environment.js";
 
 export const applySecurityMiddleware = (app) => {
   app.use(helmet());
-  app.use(cors());
+
+  const allowedOrigins = [
+    config.frontendUrl,
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+  ].filter(Boolean);
+
+  const corsOptions = {
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin) || config.nodeEnv === "development") {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS Policy: Origin not allowed"));
+      }
+    },
+    credentials: true,
+  };
+
+  app.use(cors(corsOptions));
 
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,

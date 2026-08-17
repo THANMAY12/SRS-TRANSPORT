@@ -1,4 +1,12 @@
 const TOKEN_KEY = "tcms_auth_token";
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+
+function getUrl(endpoint) {
+  if (endpoint.startsWith("http://") || endpoint.startsWith("https://")) {
+    return endpoint;
+  }
+  return API_BASE_URL ? `${API_BASE_URL}${endpoint}` : endpoint;
+}
 
 export function getStoredToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -23,7 +31,9 @@ async function request(endpoint, options = {}) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(endpoint, {
+  const url = getUrl(endpoint);
+
+  const response = await fetch(url, {
     ...options,
     headers,
   });
@@ -136,7 +146,7 @@ export const api = {
   // Backup
   downloadBackup: async () => {
     const token = getStoredToken();
-    const response = await fetch("/api/backup", {
+    const response = await fetch(getUrl("/api/backup"), {
       headers: { Authorization: `Bearer ${token}` },
     });
     const blob = await response.blob();
