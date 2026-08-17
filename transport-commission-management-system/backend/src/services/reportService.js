@@ -77,11 +77,19 @@ export async function getReports(query) {
     );
   }
 
-  const totalFreight = trips.reduce((sum, t) => sum + t.freight, 0);
-  const totalBooking = trips.reduce((sum, t) => sum + t.booking, 0);
+  const totalFreight = trips.reduce((sum, t) => sum + (t.freight || 0), 0);
+  const totalBooking = trips.reduce((sum, t) => sum + (t.booking || 0), 0);
   const totalCommission = trips.reduce((sum, t) => sum + (t.commission || 0), 0);
-  const totalAdvReceived = trips.reduce((sum, t) => sum + t.advanceReceivedAmount, 0);
-  const totalAdvPaid = trips.reduce((sum, t) => sum + t.advancePaidAmount, 0);
+  const totalDifferenceAmount = trips.reduce(
+    (sum, t) => sum + ((t.booking || 0) - (t.freight || 0)),
+    0
+  );
+  const totalGrossIncome = trips.reduce(
+    (sum, t) => sum + ((t.booking || 0) - (t.commission || 0)),
+    0
+  );
+  const totalAdvReceived = trips.reduce((sum, t) => sum + (t.advanceReceivedAmount || 0), 0);
+  const totalAdvPaid = trips.reduce((sum, t) => sum + (t.advancePaidAmount || 0), 0);
   const totalVehicleBalance = trips.reduce(
     (sum, t) => sum + (isBalanceVehicleActive(t) ? getVehicleBalanceAmount(t) : 0),
     0
@@ -97,6 +105,8 @@ export async function getReports(query) {
       totalFreight,
       totalBooking,
       totalCommission,
+      totalDifferenceAmount,
+      totalGrossIncome,
       totalAdvReceived,
       totalAdvPaid,
       totalVehicleBalance,

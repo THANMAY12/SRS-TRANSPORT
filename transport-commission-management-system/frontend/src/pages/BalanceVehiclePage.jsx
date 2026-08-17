@@ -5,19 +5,16 @@ import { DataTable } from "../components/ui/DataTable";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { Toast } from "../components/ui/Toast";
 import { ConfirmModal } from "../components/ui/ConfirmModal";
-import { formatCurrency, formatDate, calculateDaysPending } from "../lib/utils";
+import { formatCurrency, formatDate, calculateDaysPending, isBalanceVehicleActive } from "../lib/utils";
 
 export const BalanceVehiclePage = ({ trips, onClearBalance, globalSearch, setGlobalSearch }) => {
   const [confirmClearTrip, setConfirmClearTrip] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Filter trips where Advance Paid is completed (advancePaidType is set) AND (Freight - advancePaidAmount > 200) AND !vehicleBalanceCleared
+  // Filter trips with active vehicle balance (advancePaidType is set, Freight - advancePaidAmount > 200, !vehicleBalanceCleared)
   const balanceVehicleTrips = trips.filter((t) => {
-    if (!t.advancePaidType || t.advancePaidType.trim() === "") return false;
-    const balance = t.freight - t.advancePaidAmount;
-    if (balance <= 200) return false;
-    if (t.vehicleBalanceCleared) return false;
+    if (!isBalanceVehicleActive(t)) return false;
 
     if (!globalSearch.trim()) return true;
     const q = globalSearch.toLowerCase().trim();

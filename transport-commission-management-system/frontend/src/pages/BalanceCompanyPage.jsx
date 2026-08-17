@@ -5,19 +5,16 @@ import { DataTable } from "../components/ui/DataTable";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { Toast } from "../components/ui/Toast";
 import { ConfirmModal } from "../components/ui/ConfirmModal";
-import { formatCurrency, formatDate, calculateDaysPending } from "../lib/utils";
+import { formatCurrency, formatDate, calculateDaysPending, isBalanceCompanyActive } from "../lib/utils";
 
 export const BalanceCompanyPage = ({ trips, onClearBalance, globalSearch, setGlobalSearch }) => {
   const [confirmClearTrip, setConfirmClearTrip] = useState(null);
   const [isClearing, setIsClearing] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // Filter trips where Advance Received is completed (advanceReceivedType is set) AND (Booking - advanceReceivedAmount > 200) AND !companyBalanceCleared
+  // Filter trips with active company balance (advanceReceivedType is set, Booking - advanceReceivedAmount > 200, !companyBalanceCleared)
   const balanceCompanyTrips = trips.filter((t) => {
-    if (!t.advanceReceivedType || t.advanceReceivedType.trim() === "") return false;
-    const balance = t.booking - t.advanceReceivedAmount;
-    if (balance <= 200) return false;
-    if (t.companyBalanceCleared) return false;
+    if (!isBalanceCompanyActive(t)) return false;
 
     if (!globalSearch.trim()) return true;
     const q = globalSearch.toLowerCase().trim();

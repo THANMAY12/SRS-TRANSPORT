@@ -5,9 +5,10 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { PageHeader } from "../components/ui/PageHeader";
 import { DataTable } from "../components/ui/DataTable";
+import { StatusBadge } from "../components/ui/StatusBadge";
 import { Toast } from "../components/ui/Toast";
 import { api } from "../services/api";
-import { formatCurrency, formatDate } from "../lib/utils";
+import { formatCurrency, formatDate, getTripPaymentStatus } from "../lib/utils";
 
 export const ReportsPage = () => {
   const [reportPeriod, setReportPeriod] = useState("monthly");
@@ -62,22 +63,34 @@ export const ReportsPage = () => {
       return;
     }
 
-    const excelRows = reportData.trips.map((t) => ({
-      "Sl.No": t.slNo,
-      Date: t.date,
-      "Vehicle Number": t.vehicleNumber,
-      From: t.fromLocation,
-      To: t.toLocation,
-      "Freight (INR)": t.freight,
-      Transport: t.transport,
-      "Booking (INR)": t.booking,
-      "Commission (INR)": t.commission ?? "Pending",
-      "Advance Received (INR)": t.advanceReceivedAmount,
-      "Advance Received Type": t.advanceReceivedType || "Pending",
-      "Advance Paid (INR)": t.advancePaidAmount,
-      "Advance Paid Type": t.advancePaidType || "Pending",
-      Remarks: t.remarks || "",
-    }));
+    const excelRows = reportData.trips.map((t) => {
+      const booking = t.booking || 0;
+      const freight = t.freight || 0;
+      const commission = t.commission !== null && t.commission !== undefined ? t.commission : 0;
+      const diffAmount = booking - freight;
+      const grossIncome = booking - commission;
+      const status = getTripPaymentStatus(t);
+
+      return {
+        "Sl.No": t.slNo,
+        Date: t.date,
+        "Vehicle Number": t.vehicleNumber,
+        From: t.fromLocation,
+        To: t.toLocation,
+        Transport: t.transport,
+        "Booking (INR)": booking,
+        "Freight (INR)": freight,
+        "Difference Amount (Booking - Freight) (INR)": diffAmount,
+        "Commission (INR)": t.commission ?? "Pending",
+        "Total Gross Income (Booking - Commission) (INR)": grossIncome,
+        "Payment Status": status,
+        "Advance Received (INR)": t.advanceReceivedAmount || 0,
+        "Advance Received Type": t.advanceReceivedType || "Pending",
+        "Advance Paid (INR)": t.advancePaidAmount || 0,
+        "Advance Paid Type": t.advancePaidType || "Pending",
+        Remarks: t.remarks || "",
+      };
+    });
 
     const worksheet = XLSX.utils.json_to_sheet(excelRows);
     const workbook = XLSX.utils.book_new();
@@ -100,28 +113,31 @@ export const ReportsPage = () => {
     const doc = new jsPDF({ orientation: "landscape" });
 
     // Title & Header
-    doc.setFontSize(16);
+    doc.setFontSize(14);
     doc.setTextColor(23, 32, 51);
-    doc.text("Transport Commission Management Report", 14, 15);
+    doc.text("Transport Commission Management Report", 14, 13);
 
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setTextColor(100);
     doc.text(
       `Generated on: ${new Date().toLocaleString("en-IN")} | Period: ${reportPeriod.toUpperCase()}`,
       14,
-      22
+      19
     );
 
     // Summary Box
     const s = reportData.summary || {};
+    const diffTotal = s.totalDifferenceAmount !== undefined ? s.totalDifferenceAmount : ((s.totalBooking || 0) - (s.totalFreight || 0));
+    const grossTotal = s.totalGrossIncome !== undefined ? s.totalGrossIncome : ((s.totalBooking || 0) - (s.totalCommission || 0));
+
     doc.setFillColor(247, 248, 250);
-    doc.rect(14, 26, 268, 16, "F");
-    doc.setFontSize(9);
+    doc.rect(14, 22, 268, 16, "F");
+    doc.setFontSize(8);
     doc.setTextColor(0);
     doc.text(
-      `Total Trips: ${s.totalTrips || 0}   |   Total Freight: ₹${(s.totalFreight || 0).toLocaleString("en-IN")}   |   Total Commission: ₹${(s.totalCommission || 0).toLocaleString("en-IN")}   |   Total Adv Paid: ₹${(s.totalAdvPaid || 0).toLocaleString("en-IN")}`,
+      `Trips: ${s.totalTrips || 0}  |  Booking: ₹${(s.totalBooking || 0).toLocaleString("en-IN")}  |  Freight: ₹${(s.totalFreight || 0).toLocaleString("en-IN")}  |  Difference (Bk-Fr): ₹${diffTotal.toLocaleString("en-IN")}  |  Gross Income (Bk-Cm): ₹${grossTotal.toLocaleString("en-IN")}  |  Commission: ₹${(s.totalCommission || 0).toLocaleString("en-IN")}`,
       18,
-      36
+      32
     );
 
     // Table Data
@@ -130,43 +146,54 @@ export const ReportsPage = () => {
         "Sl.No",
         "Date",
         "Vehicle",
-        "From",
-        "To",
-        "Freight",
         "Transport",
         "Booking",
+        "Freight",
+        "Difference (Bk-Fr)",
         "Commission",
-        "Adv Paid",
+        "Gross Income (Bk-Cm)",
+        "Status",
         "Adv Rec",
+        "Adv Paid",
       ],
     ];
 
-    const tableRows = reportData.trips.map((t) => [
-      t.slNo,
-      t.date,
-      t.vehicleNumber,
-      t.fromLocation,
-      t.toLocation,
-      `₹${t.freight.toLocaleString("en-IN")}`,
-      t.transport,
-      `₹${t.booking.toLocaleString("en-IN")}`,
-      t.commission !== null ? `₹${t.commission.toLocaleString("en-IN")}` : "Pending",
-      `₹${t.advancePaidAmount.toLocaleString("en-IN")} (${t.advancePaidType || "N/A"})`,
-      `₹${t.advanceReceivedAmount.toLocaleString("en-IN")} (${t.advanceReceivedType || "N/A"})`,
-    ]);
+    const tableRows = reportData.trips.map((t) => {
+      const booking = t.booking || 0;
+      const freight = t.freight || 0;
+      const commission = t.commission !== null && t.commission !== undefined ? t.commission : 0;
+      const diffAmount = booking - freight;
+      const grossIncome = booking - commission;
+      const status = getTripPaymentStatus(t);
+
+      return [
+        t.slNo,
+        t.date,
+        t.vehicleNumber,
+        t.transport,
+        `₹${booking.toLocaleString("en-IN")}`,
+        `₹${freight.toLocaleString("en-IN")}`,
+        `₹${diffAmount.toLocaleString("en-IN")}`,
+        t.commission !== null ? `₹${commission.toLocaleString("en-IN")}` : "Pending",
+        `₹${grossIncome.toLocaleString("en-IN")}`,
+        status,
+        `₹${(t.advanceReceivedAmount || 0).toLocaleString("en-IN")}`,
+        `₹${(t.advancePaidAmount || 0).toLocaleString("en-IN")}`,
+      ];
+    });
 
     autoTable(doc, {
       head: tableHeaders,
       body: tableRows,
-      startY: 46,
+      startY: 42,
       theme: "grid",
       headStyles: {
         fillColor: [37, 99, 235],
         textColor: 255,
-        fontSize: 8,
+        fontSize: 7.5,
         fontStyle: "bold",
       },
-      bodyStyles: { fontSize: 8 },
+      bodyStyles: { fontSize: 7.5 },
       alternateRowStyles: { fillColor: [248, 250, 252] },
     });
 
@@ -175,16 +202,20 @@ export const ReportsPage = () => {
   };
 
   const s = reportData.summary || {};
+  const calcDiffTotal = s.totalDifferenceAmount !== undefined ? s.totalDifferenceAmount : ((s.totalBooking || 0) - (s.totalFreight || 0));
+  const calcGrossTotal = s.totalGrossIncome !== undefined ? s.totalGrossIncome : ((s.totalBooking || 0) - (s.totalCommission || 0));
 
   const columns = [
     { title: "Sl.No" },
     { title: "Date" },
     { title: "Vehicle" },
-    { title: "Route" },
-    { title: "Freight" },
     { title: "Transport" },
     { title: "Booking" },
+    { title: "Freight" },
+    { title: "Difference Amount (Booking - Freight)" },
     { title: "Commission" },
+    { title: "Total Gross Income (Booking - Commission)" },
+    { title: "Payment Status" },
     { title: "Adv Received" },
     { title: "Adv Paid" },
   ];
@@ -328,32 +359,46 @@ export const ReportsPage = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
         <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
           <p className="text-[11px] font-semibold text-slate-500 uppercase">Total trips</p>
-          <p className="text-2xl font-bold text-slate-900 font-mono mt-1">
+          <p className="text-xl font-bold text-slate-900 font-mono mt-1">
             {s.totalTrips || 0}
           </p>
         </div>
 
         <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase">Total booking</p>
+          <p className="text-xl font-bold text-slate-900 font-mono mt-1">
+            {formatCurrency(s.totalBooking)}
+          </p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
           <p className="text-[11px] font-semibold text-slate-500 uppercase">Total freight</p>
-          <p className="text-2xl font-bold text-slate-900 font-mono mt-1">
+          <p className="text-xl font-bold text-slate-900 font-mono mt-1">
             {formatCurrency(s.totalFreight)}
           </p>
         </div>
 
         <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
-          <p className="text-[11px] font-semibold text-slate-500 uppercase">Total commission</p>
-          <p className="text-2xl font-bold text-slate-900 font-mono mt-1">
-            {formatCurrency(s.totalCommission)}
+          <p className="text-[11px] font-semibold text-slate-500 uppercase">Difference (Booking - Freight)</p>
+          <p className="text-xl font-bold text-blue-700 font-mono mt-1">
+            {formatCurrency(calcDiffTotal)}
           </p>
         </div>
 
         <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
-          <p className="text-[11px] font-semibold text-slate-500 uppercase">Total booking</p>
-          <p className="text-2xl font-bold text-slate-900 font-mono mt-1">
-            {formatCurrency(s.totalBooking)}
+          <p className="text-[11px] font-semibold text-slate-500 uppercase">Total gross income (Booking - Comm)</p>
+          <p className="text-xl font-bold text-emerald-700 font-mono mt-1">
+            {formatCurrency(calcGrossTotal)}
+          </p>
+        </div>
+
+        <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase">Total commission</p>
+          <p className="text-xl font-bold text-slate-900 font-mono mt-1">
+            {formatCurrency(s.totalCommission)}
           </p>
         </div>
       </div>
@@ -378,29 +423,48 @@ export const ReportsPage = () => {
           data={reportData.trips}
           isLoading={isLoading}
           emptyMessage="No records found for the selected report criteria."
-          renderRow={(t) => (
-            <tr
-              key={t.id}
-              className="hover:bg-slate-50 transition-colors border-b border-slate-100"
-            >
-              <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">#{t.slNo}</td>
-              <td className="py-2.5 px-3.5 whitespace-nowrap">{formatDate(t.date)}</td>
-              <td className="py-2.5 px-3.5 font-mono font-semibold">{t.vehicleNumber}</td>
-              <td className="py-2.5 px-3.5 whitespace-nowrap">
-                {t.fromLocation} → {t.toLocation}
-              </td>
-              <td className="py-2.5 px-3.5 font-mono font-bold">{formatCurrency(t.freight)}</td>
-              <td className="py-2.5 px-3.5 truncate max-w-[120px] text-slate-700">{t.transport}</td>
-              <td className="py-2.5 px-3.5 font-mono text-slate-600">
-                {formatCurrency(t.booking)}
-              </td>
-              <td className="py-2.5 px-3.5 font-mono font-semibold text-slate-900">
-                {t.commission !== null ? formatCurrency(t.commission) : "Pending"}
-              </td>
-              <td className="py-2.5 px-3.5 font-mono">{formatCurrency(t.advanceReceivedAmount)}</td>
-              <td className="py-2.5 px-3.5 font-mono">{formatCurrency(t.advancePaidAmount)}</td>
-            </tr>
-          )}
+          renderRow={(t) => {
+            const booking = t.booking || 0;
+            const freight = t.freight || 0;
+            const commission = t.commission !== null && t.commission !== undefined ? t.commission : 0;
+            const diffAmount = booking - freight;
+            const grossIncome = booking - commission;
+            const status = getTripPaymentStatus(t);
+
+            return (
+              <tr
+                key={t.id}
+                className="hover:bg-slate-50 transition-colors border-b border-slate-100"
+              >
+                <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">#{t.slNo}</td>
+                <td className="py-2.5 px-3.5 whitespace-nowrap">{formatDate(t.date)}</td>
+                <td className="py-2.5 px-3.5 font-mono font-semibold">{t.vehicleNumber}</td>
+                <td className="py-2.5 px-3.5 truncate max-w-[120px] text-slate-700">{t.transport}</td>
+                <td className="py-2.5 px-3.5 font-mono font-bold text-slate-900">{formatCurrency(booking)}</td>
+                <td className="py-2.5 px-3.5 font-mono font-bold text-slate-900">{formatCurrency(freight)}</td>
+                <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">{formatCurrency(diffAmount)}</td>
+                <td className="py-2.5 px-3.5 font-mono font-semibold text-slate-900">
+                  {t.commission !== null ? formatCurrency(t.commission) : "Pending"}
+                </td>
+                <td className="py-2.5 px-3.5 font-mono font-bold text-emerald-700">{formatCurrency(grossIncome)}</td>
+                <td className="py-2.5 px-3.5">
+                  <StatusBadge
+                    type={
+                      status === "Completed"
+                        ? "completed"
+                        : status.startsWith("Pending")
+                        ? "pending"
+                        : "balance-due"
+                    }
+                    text={status}
+                    size="sm"
+                  />
+                </td>
+                <td className="py-2.5 px-3.5 font-mono">{formatCurrency(t.advanceReceivedAmount)}</td>
+                <td className="py-2.5 px-3.5 font-mono">{formatCurrency(t.advancePaidAmount)}</td>
+              </tr>
+            );
+          }}
         />
       </div>
     </div>
