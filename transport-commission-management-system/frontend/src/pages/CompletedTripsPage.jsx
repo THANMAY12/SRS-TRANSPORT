@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { DataTable } from "../components/ui/DataTable";
 import { StatusBadge } from "../components/ui/StatusBadge";
+import { TripDetailModal } from "../components/modals/TripDetailModal";
 import {
   formatCurrency,
   formatDate,
@@ -11,6 +12,8 @@ import {
 } from "../lib/utils";
 
 export const CompletedTripsPage = ({ trips, globalSearch, setGlobalSearch }) => {
+  const [selectedTrip, setSelectedTrip] = useState(null);
+
   // Filter completed trips
   const completedTrips = trips.filter((t) => {
     if (!isCompletedTrip(t)) return false;
@@ -70,8 +73,24 @@ export const CompletedTripsPage = ({ trips, globalSearch, setGlobalSearch }) => 
               key={trip.id}
               className="hover:bg-slate-50 transition-colors border-b border-slate-100 text-slate-800"
             >
-              <td className="py-2.5 px-3 font-mono font-bold text-blue-700">#{trip.slNo}</td>
-              <td className="py-2.5 px-3 whitespace-nowrap">{formatDate(trip.date)}</td>
+              <td className="py-2.5 px-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedTrip(trip)}
+                  className="font-mono font-bold text-blue-700 hover:underline"
+                  title="Click to view full trip details"
+                >
+                  #{trip.slNo}
+                </button>
+              </td>
+              <td className="py-2.5 px-3 whitespace-nowrap">
+                <div>{formatDate(trip.date)}</div>
+                {trip.commissionDueDate && (
+                  <div className="text-[10px] text-slate-500 font-sans">
+                    Comm: {formatDate(trip.commissionDueDate)}
+                  </div>
+                )}
+              </td>
               <td className="py-2.5 px-3 font-mono font-semibold">{trip.vehicleNumber}</td>
               <td className="py-2.5 px-3 whitespace-nowrap">{trip.fromLocation}</td>
               <td className="py-2.5 px-3 whitespace-nowrap">{trip.toLocation}</td>
@@ -85,27 +104,60 @@ export const CompletedTripsPage = ({ trips, globalSearch, setGlobalSearch }) => 
                 {formatCurrency(trip.booking)}
               </td>
               <td className="py-2.5 px-3 font-mono font-semibold text-slate-900">
-                {formatCurrency(trip.commission)}
+                <div>{formatCurrency(trip.commission)}</div>
+                {trip.commissionDueDate && (
+                  <div className="text-[10px] text-slate-500 font-sans font-normal">
+                    Date: {formatDate(trip.commissionDueDate)}
+                  </div>
+                )}
               </td>
               <td className="py-2.5 px-3 font-mono">
-                {formatCurrency(trip.advanceReceivedAmount)} ({trip.advanceReceivedType || "N/A"})
+                <div>
+                  {formatCurrency(trip.advanceReceivedAmount)} ({trip.advanceReceivedType || "N/A"})
+                </div>
+                {trip.collectionDueDate && (
+                  <div className="text-[10px] text-slate-500 font-sans">
+                    Rec Date: {formatDate(trip.collectionDueDate)}
+                  </div>
+                )}
               </td>
               <td className="py-2.5 px-3 font-mono">
-                {formatCurrency(trip.advancePaidAmount)} ({trip.advancePaidType || "N/A"})
+                <div>
+                  {formatCurrency(trip.advancePaidAmount)} ({trip.advancePaidType || "N/A"})
+                </div>
+                {trip.advanceDueDate && (
+                  <div className="text-[10px] text-slate-500 font-sans">
+                    Paid Date: {formatDate(trip.advanceDueDate)}
+                  </div>
+                )}
               </td>
               <td className="py-2.5 px-3 font-mono text-slate-600">
-                {trip.vehicleBalanceCleared
-                  ? "Cleared"
-                  : vehBal <= 200
-                    ? "≤ ₹200"
-                    : formatCurrency(vehBal)}
+                <div>
+                  {trip.vehicleBalanceCleared
+                    ? "Cleared"
+                    : vehBal <= 200
+                      ? "≤ ₹200"
+                      : formatCurrency(vehBal)}
+                </div>
+                {trip.vehicleBalanceClearedDate && (
+                  <div className="text-[10px] text-slate-500 font-sans">
+                    Cleared: {formatDate(trip.vehicleBalanceClearedDate)}
+                  </div>
+                )}
               </td>
               <td className="py-2.5 px-3 font-mono text-slate-600">
-                {trip.companyBalanceCleared
-                  ? "Cleared"
-                  : compBal <= 200
-                    ? "≤ ₹200"
-                    : formatCurrency(compBal)}
+                <div>
+                  {trip.companyBalanceCleared
+                    ? "Cleared"
+                    : compBal <= 200
+                      ? "≤ ₹200"
+                      : formatCurrency(compBal)}
+                </div>
+                {trip.companyBalanceClearedDate && (
+                  <div className="text-[10px] text-slate-500 font-sans">
+                    Cleared: {formatDate(trip.companyBalanceClearedDate)}
+                  </div>
+                )}
               </td>
               <td className="py-2.5 px-3 text-center">
                 <StatusBadge type="completed" text="Completed" size="sm" />
@@ -114,6 +166,10 @@ export const CompletedTripsPage = ({ trips, globalSearch, setGlobalSearch }) => 
           );
         }}
       />
+
+      {selectedTrip && (
+        <TripDetailModal trip={selectedTrip} onClose={() => setSelectedTrip(null)} />
+      )}
     </div>
   );
 };

@@ -7,6 +7,7 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { DataTable } from "../components/ui/DataTable";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { Toast } from "../components/ui/Toast";
+import { TripDetailModal } from "../components/modals/TripDetailModal";
 import { api } from "../services/api";
 import { formatCurrency, formatDate, getTripPaymentStatus } from "../lib/utils";
 
@@ -19,6 +20,7 @@ export const ReportsPage = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [selectedTrip, setSelectedTrip] = useState(null);
   const [reportData, setReportData] = useState({
     summary: {},
     trips: [],
@@ -73,7 +75,7 @@ export const ReportsPage = () => {
 
       return {
         "Sl.No": t.slNo,
-        Date: t.date,
+        "Trip Date": t.date,
         "Vehicle Number": t.vehicleNumber,
         "Driver Phone": t.driverPhone || "",
         From: t.fromLocation,
@@ -83,12 +85,15 @@ export const ReportsPage = () => {
         "Freight (INR)": freight,
         "Difference Amount (Booking - Freight) (INR)": diffAmount,
         "Commission (INR)": t.commission ?? "Pending",
+        "Commission Date": t.commissionDueDate || "N/A",
         "Total Gross Income ((Booking - Freight) + Commission) (INR)": grossIncome,
         "Payment Status": status,
         "Advance Received (INR)": t.advanceReceivedAmount || 0,
         "Advance Received Type": t.advanceReceivedType || "Pending",
+        "Advance Received Date": t.collectionDueDate || "N/A",
         "Advance Paid (INR)": t.advancePaidAmount || 0,
         "Advance Paid Type": t.advancePaidType || "Pending",
+        "Advance Paid Date": t.advanceDueDate || "N/A",
         "Vehicle Balance Cleared Date": t.vehicleBalanceClearedDate || "N/A",
         "Company Balance Cleared Date": t.companyBalanceClearedDate || "N/A",
         Remarks: t.remarks || "",
@@ -461,8 +466,24 @@ export const ReportsPage = () => {
                 key={t.id}
                 className="hover:bg-slate-50 transition-colors border-b border-slate-100"
               >
-                <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">#{t.slNo}</td>
-                <td className="py-2.5 px-3.5 whitespace-nowrap">{formatDate(t.date)}</td>
+                <td className="py-2.5 px-3.5">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTrip(t)}
+                    className="font-mono font-bold text-blue-700 hover:underline"
+                    title="Click to view full trip details"
+                  >
+                    #{t.slNo}
+                  </button>
+                </td>
+                <td className="py-2.5 px-3.5 whitespace-nowrap">
+                  <div>{formatDate(t.date)}</div>
+                  {t.commissionDueDate && (
+                    <div className="text-[10px] text-slate-500 font-sans">
+                      Comm: {formatDate(t.commissionDueDate)}
+                    </div>
+                  )}
+                </td>
                 <td className="py-2.5 px-3.5 font-mono font-semibold">{t.vehicleNumber}</td>
                 <td className="py-2.5 px-3.5 truncate max-w-[120px] text-slate-700">
                   {t.transport}
@@ -477,7 +498,12 @@ export const ReportsPage = () => {
                   {formatCurrency(diffAmount)}
                 </td>
                 <td className="py-2.5 px-3.5 font-mono font-semibold text-slate-900">
-                  {t.commission !== null ? formatCurrency(t.commission) : "Pending"}
+                  <div>{t.commission !== null ? formatCurrency(t.commission) : "Pending"}</div>
+                  {t.commissionDueDate && (
+                    <div className="text-[10px] text-slate-500 font-sans font-normal">
+                      Date: {formatDate(t.commissionDueDate)}
+                    </div>
+                  )}
                 </td>
                 <td className="py-2.5 px-3.5 font-mono font-bold text-emerald-700">
                   {formatCurrency(grossIncome)}
@@ -496,14 +522,30 @@ export const ReportsPage = () => {
                   />
                 </td>
                 <td className="py-2.5 px-3.5 font-mono">
-                  {formatCurrency(t.advanceReceivedAmount)}
+                  <div>{formatCurrency(t.advanceReceivedAmount)}</div>
+                  {t.collectionDueDate && (
+                    <div className="text-[10px] text-slate-500 font-sans">
+                      Rec: {formatDate(t.collectionDueDate)}
+                    </div>
+                  )}
                 </td>
-                <td className="py-2.5 px-3.5 font-mono">{formatCurrency(t.advancePaidAmount)}</td>
+                <td className="py-2.5 px-3.5 font-mono">
+                  <div>{formatCurrency(t.advancePaidAmount)}</div>
+                  {t.advanceDueDate && (
+                    <div className="text-[10px] text-slate-500 font-sans">
+                      Paid: {formatDate(t.advanceDueDate)}
+                    </div>
+                  )}
+                </td>
               </tr>
             );
           }}
         />
       </div>
+
+      {selectedTrip && (
+        <TripDetailModal trip={selectedTrip} onClose={() => setSelectedTrip(null)} />
+      )}
     </div>
   );
 };

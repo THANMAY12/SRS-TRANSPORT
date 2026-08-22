@@ -87,6 +87,11 @@ export const TripDetailModal = ({ trip, onClose }) => {
               <strong className="text-emerald-700">
                 {trip.commission !== null ? formatCurrency(trip.commission) : "Blank (Pending)"}
               </strong>
+              {trip.commissionDueDate && (
+                <span className="block text-[10px] text-slate-500 font-sans mt-0.5">
+                  Comm Date: {formatDate(trip.commissionDueDate)}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -105,6 +110,11 @@ export const TripDetailModal = ({ trip, onClose }) => {
               <span className="ml-2 text-[10px] font-medium text-slate-600">
                 ({trip.advancePaidType || "Blank / Pending"})
               </span>
+              {trip.advanceDueDate && (
+                <span className="block text-[10px] text-slate-500 font-sans mt-0.5">
+                  Paid Date: {formatDate(trip.advanceDueDate)}
+                </span>
+              )}
             </div>
             <div>
               <span className="text-slate-500 block text-[10px]">
@@ -116,6 +126,11 @@ export const TripDetailModal = ({ trip, onClose }) => {
               <span className="ml-2 text-[10px] font-medium text-slate-600">
                 ({trip.advanceReceivedType || "Blank / Pending"})
               </span>
+              {trip.collectionDueDate && (
+                <span className="block text-[10px] text-slate-500 font-sans mt-0.5">
+                  Rec Date: {formatDate(trip.collectionDueDate)}
+                </span>
+              )}
             </div>
           </div>
         </div>
