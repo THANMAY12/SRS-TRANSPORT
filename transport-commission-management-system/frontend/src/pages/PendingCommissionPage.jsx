@@ -23,9 +23,12 @@ export const PendingCommissionPage = ({ trips, onUpdateTrip, globalSearch, setGl
         t.toLocation.toLowerCase().includes(globalSearch.toLowerCase().trim()))
   );
 
-  const handleSaveCommission = async (id, commissionVal) => {
+  const handleSaveCommission = async (id, commissionVal, commissionDueDate) => {
     try {
-      await onUpdateTrip(id, { commission: commissionVal });
+      await onUpdateTrip(id, {
+        commission: commissionVal,
+        commissionDueDate: commissionDueDate || new Date().toISOString().split("T")[0],
+      });
       setToast({
         type: "success",
         message: `Commission assigned successfully for Trip #${selectedTrip?.slNo}.`,

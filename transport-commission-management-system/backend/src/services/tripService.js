@@ -207,6 +207,19 @@ export async function updateTrip(id, body, user) {
     body.advancePaidType !== undefined ? body.advancePaidType : existingTrip.advancePaidType;
   const updatedRemarks = body.remarks !== undefined ? body.remarks : existingTrip.remarks;
 
+  const updatedCommissionDueDate =
+    body.commissionDueDate !== undefined
+      ? body.commissionDueDate
+      : existingTrip.commissionDueDate || existingTrip.date;
+  const updatedAdvanceDueDate =
+    body.advanceDueDate !== undefined
+      ? body.advanceDueDate
+      : existingTrip.advanceDueDate || existingTrip.date;
+  const updatedCollectionDueDate =
+    body.collectionDueDate !== undefined
+      ? body.collectionDueDate
+      : existingTrip.collectionDueDate || existingTrip.date;
+
   const now = new Date().toISOString();
 
   await Trip.updateOne(
@@ -226,6 +239,9 @@ export async function updateTrip(id, body, user) {
       advance_paid_amount: updatedAdvPaidAmt,
       advance_paid_type: updatedAdvPaidType,
       remarks: updatedRemarks,
+      commission_due_date: updatedCommissionDueDate,
+      advance_due_date: updatedAdvanceDueDate,
+      collection_due_date: updatedCollectionDueDate,
       updated_at: now,
       updated_by: user.username,
     }

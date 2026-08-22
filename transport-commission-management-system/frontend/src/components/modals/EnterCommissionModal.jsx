@@ -5,6 +5,9 @@ import { formatCurrency } from "../../lib/utils";
 
 export const EnterCommissionModal = ({ trip, onClose, onSave }) => {
   const [commission, setCommission] = useState("");
+  const [commissionDueDate, setCommissionDueDate] = useState(
+    () => new Date().toISOString().split("T")[0]
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -17,10 +20,14 @@ export const EnterCommissionModal = ({ trip, onClose, onSave }) => {
       setError("Please enter a valid numeric commission amount.");
       return;
     }
+    if (!commissionDueDate || !commissionDueDate.trim()) {
+      setError("Commission date is required.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      await onSave(trip.id, Number(commission));
+      await onSave(trip.id, Number(commission), commissionDueDate);
       onClose();
     } catch (err) {
       setError(err.message || "Failed to update commission amount.");
@@ -90,6 +97,23 @@ export const EnterCommissionModal = ({ trip, onClose, onSave }) => {
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
               />
             </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="modal_commission_date_input"
+              className="block text-[11px] font-semibold text-slate-700 uppercase mb-1"
+            >
+              Commission Date *
+            </label>
+            <input
+              id="modal_commission_date_input"
+              type="date"
+              required
+              value={commissionDueDate}
+              onChange={(e) => setCommissionDueDate(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
+            />
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200">
