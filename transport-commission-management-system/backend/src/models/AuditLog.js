@@ -13,4 +13,7 @@ const auditLogSchema = new mongoose.Schema({
   timestamp: { type: String, required: true },
 });
 
+auditLogSchema.index({ date: 1, timestamp: -1 });
+auditLogSchema.index({ username: 1 });
+
 export const AuditLog = mongoose.model("AuditLog", auditLogSchema);

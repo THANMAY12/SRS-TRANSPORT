@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Download, FileSpreadsheet, RefreshCw } from "lucide-react";
+import {
+  Download,
+  FileSpreadsheet,
+  RefreshCw,
+  Filter,
+  XCircle,
+  Calendar,
+  User as UserIcon,
+} from "lucide-react";
 import * as XLSX from "xlsx";
 import { PageHeader } from "../components/ui/PageHeader";
 import { DataTable } from "../components/ui/DataTable";
@@ -15,16 +23,60 @@ import {
 
 export const AuditLogPage = () => {
   const [logs, setLogs] = useState([]);
+  const [userList, setUserList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
   const [toast, setToast] = useState(null);
 
-  const fetchLogs = async () => {
+  // Filter States
+  const [datePreset, setDatePreset] = useState("today"); // "today" | "yesterday" | "custom" | "all"
+  const [customDate, setCustomDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [userFilter, setUserFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const getTodayStr = () => new Date().toISOString().split("T")[0];
+  const getYesterdayStr = () => new Date(Date.now() - 86400000).toISOString().split("T")[0];
+
+  // Fetch Workers/Users for dropdown
+  useEffect(() => {
+    api
+      .getWorkers()
+      .then((workers) => {
+        const usernames = Array.isArray(workers) ? workers.map((w) => w.username) : [];
+        setUserList(Array.from(new Set([...usernames, "Darshan", "Admin"])).filter(Boolean));
+      })
+      .catch(() => {
+        setUserList(["Darshan", "Admin", "Worker1"]);
+      });
+  }, []);
+
+  const fetchLogs = React.useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await api.getAuditLogs();
-      setLogs(data);
+      const params = {};
+      if (datePreset === "today") {
+        params.datePreset = "today";
+        params.date = getTodayStr();
+      } else if (datePreset === "yesterday") {
+        params.datePreset = "yesterday";
+        params.date = getYesterdayStr();
+      } else if (datePreset === "custom") {
+        params.datePreset = "custom";
+        params.date = customDate;
+      } else {
+        params.datePreset = "all";
+      }
+
+      if (userFilter && userFilter !== "all") {
+        params.username = userFilter;
+      }
+
+      if (searchTerm.trim()) {
+        params.search = searchTerm.trim();
+      }
+
+      const data = await api.getAuditLogs(params);
+      setLogs(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load audit logs:", err);
       setToast({
@@ -34,30 +86,67 @@ export const AuditLogPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [datePreset, customDate, userFilter, searchTerm]);
 
   useEffect(() => {
     fetchLogs();
-  }, []);
+  }, [fetchLogs]);
+
+  const handleClearFilters = () => {
+    setDatePreset("all");
+    setCustomDate(getTodayStr());
+    setUserFilter("all");
+    setSearchTerm("");
+  };
+
+  // Additional client-side search filtering if user types in search box
+  const filteredLogs = logs.filter((l) => {
+    if (!searchTerm.trim()) return true;
+    const q = searchTerm.toLowerCase().trim();
+    return (
+      l.username.toLowerCase().includes(q) ||
+      l.action.toLowerCase().includes(q) ||
+      (l.newValue && l.newValue.toLowerCase().includes(q)) ||
+      (l.oldValue && l.oldValue.toLowerCase().includes(q)) ||
+      (l.date && l.date.includes(q))
+    );
+  });
+
+  const getActiveDateLabel = () => {
+    if (datePreset === "today") return `Today — ${formatDate(getTodayStr())}`;
+    if (datePreset === "yesterday") return `Yesterday — ${formatDate(getYesterdayStr())}`;
+    if (datePreset === "custom") return customDate ? formatDate(customDate) : "Custom Date";
+    return "All Dates";
+  };
+
+  const getEmptyMessage = () => {
+    if (datePreset === "today") {
+      return `No audit events were recorded on Today (${formatDate(getTodayStr())}).`;
+    }
+    if (datePreset === "yesterday") {
+      return `No audit events were recorded on Yesterday (${formatDate(getYesterdayStr())}).`;
+    }
+    if (datePreset === "custom") {
+      return `No audit events were recorded on ${formatDate(customDate)}.`;
+    }
+    return "No audit log records found for the selected criteria.";
+  };
 
   const handleExportDatabaseToExcel = async () => {
     setIsExporting(true);
     setToast({
       type: "info",
-      message: "Export started: Compiling database records into Excel workbook...",
+      message: "Export started: Compiling database records and filtered audit logs...",
     });
 
     try {
-      // Fetch all database collections
-      const [tripsData, workersData, auditLogsData] = await Promise.all([
+      const [tripsData, workersData] = await Promise.all([
         api.getTrips(),
         api.getWorkers().catch(() => []),
-        api.getAuditLogs(),
       ]);
 
       const trips = Array.isArray(tripsData) ? tripsData : [];
       const workers = Array.isArray(workersData) ? workersData : [];
-      const auditLogs = Array.isArray(auditLogsData) ? auditLogsData : [];
 
       // Sheet 1: Trips
       const tripsRows = trips.map((t) => ({
@@ -91,13 +180,13 @@ export const AuditLogPage = () => {
         "Updated At": w.updatedAt ? formatDate(w.updatedAt) : "N/A",
       }));
 
-      // Sheet 3: Audit Logs
-      const auditRows = auditLogs.map((l) => ({
+      // Sheet 3: Filtered Audit Logs
+      const auditRows = filteredLogs.map((l) => ({
         Timestamp: `${l.date || ""} ${l.time || ""}`.trim(),
         User: l.username,
         Role: l.userRole,
         Action: l.action,
-        Resource: l.targetId || "-",
+        Resource: l.tripId || "-",
         "Previous Value": l.oldValue || "N/A",
         "New Value": l.newValue || "-",
       }));
@@ -111,10 +200,9 @@ export const AuditLogPage = () => {
         workersRows.length > 0 ? workersRows : [{ Role: "No worker records available" }]
       );
       const wsAudit = XLSX.utils.json_to_sheet(
-        auditRows.length > 0 ? auditRows : [{ Action: "No audit log records available" }]
+        auditRows.length > 0 ? auditRows : [{ "Audit Event Status": getEmptyMessage() }]
       );
 
-      // Auto-calculate column widths
       const formatSheet = (ws, rows) => {
         if (rows && rows.length > 0) {
           const keys = Object.keys(rows[0]);
@@ -131,16 +219,14 @@ export const AuditLogPage = () => {
 
       XLSX.utils.book_append_sheet(workbook, wsTrips, "Trips");
       XLSX.utils.book_append_sheet(workbook, wsWorkers, "Users & Workers");
-      XLSX.utils.book_append_sheet(workbook, wsAudit, "Audit Logs");
+      XLSX.utils.book_append_sheet(workbook, wsAudit, `Audit Logs (${datePreset})`);
 
-      const todayStr = new Date().toISOString().split("T")[0];
-      const fileName = `TCMS_Database_Export_${todayStr}.xlsx`;
-
+      const fileName = `TCMS_Database_Export_${datePreset}_${getTodayStr()}.xlsx`;
       XLSX.writeFile(workbook, fileName);
 
       setToast({
         type: "success",
-        message: `Database exported to Excel successfully! File saved as ${fileName}`,
+        message: `Database & filtered audit logs exported to Excel successfully! File saved as ${fileName}`,
       });
     } catch (err) {
       console.error("Export database to Excel failed:", err);
@@ -168,14 +254,6 @@ export const AuditLogPage = () => {
     }
   };
 
-  const filteredLogs = logs.filter(
-    (l) =>
-      l.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      l.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      l.newValue.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      l.oldValue.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   const columns = [
     { title: "User Name" },
     { title: "Role" },
@@ -193,7 +271,7 @@ export const AuditLogPage = () => {
         badgeText="Administration"
         title="System audit trail"
         subtitle="Complete immutable audit record of all user activities, logins, trip creations, updates, deletions, and balance clearances."
-        searchPlaceholder="Filter logs by user, action, or value..."
+        searchPlaceholder="Search audit action, value..."
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         printId="audit-print-btn"
@@ -232,12 +310,140 @@ export const AuditLogPage = () => {
 
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
+      {/* Enterprise Day-Wise Date & User Filter Bar */}
+      <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Filter className="h-4 w-4 text-blue-600" />
+            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+              Filter Audit Records
+            </h3>
+          </div>
+
+          {(datePreset !== "all" || userFilter !== "all" || searchTerm.trim() !== "") && (
+            <button
+              onClick={handleClearFilters}
+              className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs flex items-center gap-1 transition-colors"
+            >
+              <XCircle className="h-3.5 w-3.5 text-slate-500" />
+              <span>Clear Filters</span>
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Date Preset Selector */}
+          <div>
+            <label
+              htmlFor="field_datePreset"
+              className="block font-semibold text-slate-600 mb-1 uppercase text-[10px] flex items-center gap-1"
+            >
+              <Calendar className="h-3 w-3 text-slate-400" />
+              <span>Date Filter</span>
+            </label>
+            <select
+              id="field_datePreset"
+              value={datePreset}
+              onChange={(e) => setDatePreset(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
+            >
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="custom">Custom Date</option>
+              <option value="all">All Dates</option>
+            </select>
+          </div>
+
+          {/* Custom Date Picker (when Custom Date is selected) */}
+          {datePreset === "custom" && (
+            <div>
+              <label
+                htmlFor="field_customDate"
+                className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]"
+              >
+                Select Calendar Date
+              </label>
+              <input
+                id="field_customDate"
+                type="date"
+                value={customDate}
+                onChange={(e) => setCustomDate(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
+              />
+            </div>
+          )}
+
+          {/* User Selector */}
+          <div>
+            <label
+              htmlFor="field_userFilter"
+              className="block font-semibold text-slate-600 mb-1 uppercase text-[10px] flex items-center gap-1"
+            >
+              <UserIcon className="h-3 w-3 text-slate-400" />
+              <span>User Filter</span>
+            </label>
+            <select
+              id="field_userFilter"
+              value={userFilter}
+              onChange={(e) => setUserFilter(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
+            >
+              <option value="all">All Users</option>
+              {userList.map((user) => (
+                <option key={user} value={user}>
+                  {user}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Search Term Input */}
+          <div className={datePreset === "custom" ? "" : "lg:col-span-2"}>
+            <label
+              htmlFor="field_searchTerm"
+              className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]"
+            >
+              Quick Search Event / Value
+            </label>
+            <input
+              id="field_searchTerm"
+              type="text"
+              placeholder="Search action event or values..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Active Filter Summary Banner */}
+      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-700 font-medium gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-slate-500">Showing audit logs for:</span>
+          <strong className="text-slate-900 font-semibold">{getActiveDateLabel()}</strong>
+          {userFilter !== "all" && (
+            <>
+              <span className="text-slate-400">•</span>
+              <span className="text-slate-500">User:</span>
+              <strong className="text-blue-700">{userFilter}</strong>
+            </>
+          )}
+        </div>
+
+        <div>
+          <span className="font-mono font-bold text-slate-900">
+            Showing {filteredLogs.length} audit event{filteredLogs.length !== 1 ? "s" : ""}
+          </span>
+        </div>
+      </div>
+
       {/* Audit Log Table */}
       <DataTable
         columns={columns}
         data={filteredLogs}
         isLoading={isLoading}
-        emptyMessage="No audit log records found."
+        emptyMessage={getEmptyMessage()}
         renderRow={(log) => (
           <tr
             key={log.id}

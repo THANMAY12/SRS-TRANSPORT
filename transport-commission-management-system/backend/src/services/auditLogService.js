@@ -28,8 +28,53 @@ export async function addAuditLog(
   });
 }
 
-export async function getAuditLogs() {
-  const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(500).lean();
+export async function getAuditLogs(params = {}) {
+  const { datePreset, date, startDate, endDate, username, search, limit } = params;
+
+  const query = {};
+
+  // Date filtering
+  const now = new Date();
+  if (datePreset === "today") {
+    query.date = now.toISOString().split("T")[0];
+  } else if (datePreset === "yesterday") {
+    const yesterday = new Date(now.getTime() - 86400000);
+    query.date = yesterday.toISOString().split("T")[0];
+  } else if (datePreset === "custom" && date) {
+    query.date = String(date);
+  } else if (startDate || endDate) {
+    query.date = {};
+    if (startDate) query.date.$gte = String(startDate);
+    if (endDate) query.date.$lte = String(endDate);
+  } else if (date) {
+    query.date = String(date);
+  }
+
+  // Username filtering
+  if (username && String(username).toLowerCase() !== "all") {
+    query.username = { $regex: new RegExp(`^${username.trim()}$`, "i") };
+  }
+
+  // Search filter across fields
+  if (search && String(search).trim()) {
+    const q = String(search).trim();
+    const regex = new RegExp(q, "i");
+    query.$or = [
+      { username: regex },
+      { action: regex },
+      { old_value: regex },
+      { new_value: regex },
+      { date: regex },
+    ];
+  }
+
+  const queryLimit = limit ? parseInt(String(limit), 10) : 500;
+
+  const logs = await AuditLog.find(query)
+    .sort({ timestamp: -1 })
+    .limit(isNaN(queryLimit) ? 500 : queryLimit)
+    .lean();
+
   return logs.map((row) => ({
     id: row.id,
     username: row.username,

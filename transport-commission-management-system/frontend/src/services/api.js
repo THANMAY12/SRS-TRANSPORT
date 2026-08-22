@@ -143,7 +143,16 @@ export const api = {
     }),
 
   // Audit Logs
-  getAuditLogs: () => request("/api/audit-logs"),
+  getAuditLogs: (params = {}) => {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, val]) => {
+      if (val !== undefined && val !== null && val !== "") {
+        query.append(key, val);
+      }
+    });
+    const qStr = query.toString();
+    return request(`/api/audit-logs${qStr ? `?${qStr}` : ""}`);
+  },
 
   // Backup
   downloadBackup: async () => {
