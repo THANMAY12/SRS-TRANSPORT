@@ -153,6 +153,7 @@ export const AuditLogPage = () => {
         "Sl.No": t.slNo,
         Date: t.date,
         "Vehicle Number": t.vehicleNumber,
+        "Driver Phone": t.driverPhone || "",
         From: t.fromLocation,
         To: t.toLocation,
         "Freight (INR)": t.freight || 0,
@@ -167,6 +168,8 @@ export const AuditLogPage = () => {
         Remarks: t.remarks || "",
         "Vehicle Balance (INR)": getVehicleBalanceAmount(t),
         "Company Balance (INR)": getCompanyBalanceAmount(t),
+        "Vehicle Balance Cleared Date": t.vehicleBalanceClearedDate || "N/A",
+        "Company Balance Cleared Date": t.companyBalanceClearedDate || "N/A",
         Status: getTripPaymentStatus(t),
       }));
 

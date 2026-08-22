@@ -50,6 +50,10 @@ export const TripDetailModal = ({ trip, onClose }) => {
               <strong className="font-mono text-slate-900">{trip.vehicleNumber}</strong>
             </div>
             <div>
+              <span className="text-slate-500 block text-[10px]">Driver Phone</span>
+              <strong className="font-mono text-slate-900">{trip.driverPhone || "N/A"}</strong>
+            </div>
+            <div>
               <span className="text-slate-500 block text-[10px]">Origin (From)</span>
               <strong className="text-slate-900">{trip.fromLocation}</strong>
             </div>
@@ -133,6 +137,11 @@ export const TripDetailModal = ({ trip, onClose }) => {
                     ? `₹${vehBal} (≤ ₹200)`
                     : formatCurrency(vehBal)}
               </strong>
+              {trip.vehicleBalanceClearedDate && (
+                <span className="block text-[10px] text-slate-500 font-sans mt-0.5">
+                  Cleared Date: {formatDate(trip.vehicleBalanceClearedDate)}
+                </span>
+              )}
             </div>
             <div>
               <span className="text-slate-500 block text-[10px] font-sans">
@@ -145,6 +154,11 @@ export const TripDetailModal = ({ trip, onClose }) => {
                     ? `₹${compBal} (≤ ₹200)`
                     : formatCurrency(compBal)}
               </strong>
+              {trip.companyBalanceClearedDate && (
+                <span className="block text-[10px] text-slate-500 font-sans mt-0.5">
+                  Cleared Date: {formatDate(trip.companyBalanceClearedDate)}
+                </span>
+              )}
             </div>
           </div>
         </div>

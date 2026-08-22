@@ -30,11 +30,11 @@ export const BalanceCompanyPage = ({ trips, onClearBalance, globalSearch, setGlo
     );
   });
 
-  const handleConfirmClear = async (amountToClear) => {
+  const handleConfirmClear = async (amountToClear, clearedDate) => {
     if (!confirmClearTrip) return;
     setIsClearing(true);
     try {
-      const res = await onClearBalance(confirmClearTrip.id, amountToClear);
+      const res = await onClearBalance(confirmClearTrip.id, amountToClear, clearedDate);
       const remaining =
         res?.remainingBalance !== undefined
           ? res.remainingBalance

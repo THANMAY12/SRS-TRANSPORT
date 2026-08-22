@@ -75,6 +75,7 @@ export const ReportsPage = () => {
         "Sl.No": t.slNo,
         Date: t.date,
         "Vehicle Number": t.vehicleNumber,
+        "Driver Phone": t.driverPhone || "",
         From: t.fromLocation,
         To: t.toLocation,
         Transport: t.transport,
@@ -88,6 +89,8 @@ export const ReportsPage = () => {
         "Advance Received Type": t.advanceReceivedType || "Pending",
         "Advance Paid (INR)": t.advancePaidAmount || 0,
         "Advance Paid Type": t.advancePaidType || "Pending",
+        "Vehicle Balance Cleared Date": t.vehicleBalanceClearedDate || "N/A",
+        "Company Balance Cleared Date": t.companyBalanceClearedDate || "N/A",
         Remarks: t.remarks || "",
       };
     });

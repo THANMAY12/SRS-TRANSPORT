@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   Users,
   LogOut,
-  TruckIcon,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -138,8 +137,12 @@ export const Sidebar = ({ activePage, setActivePage, stats, isOpen, setIsOpen })
         {/* Brand Header */}
         <div className="h-14 px-5 flex items-center justify-between border-b border-slate-200 bg-white">
           <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-xs">
-              <TruckIcon className="h-4 w-4" />
+            <div className="h-8 w-8 rounded-lg flex items-center justify-center text-white shadow-xs">
+              <img
+                src="../assets/logo.webp"
+                alt="Transport Commission System"
+                className="h-8 w-8 object-contain"
+              />
             </div>
             <div>
               <h1 className="font-bold text-sm text-slate-900 tracking-tight leading-none">

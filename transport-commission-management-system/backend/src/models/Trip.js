@@ -5,6 +5,7 @@ const tripSchema = new mongoose.Schema({
   sl_no: { type: Number, required: true },
   date: { type: String, required: true },
   vehicle_number: { type: String, required: true },
+  driver_phone: { type: String, default: "" },
   from_location: { type: String, required: true },
   to_location: { type: String, required: true },
   freight: { type: Number, default: 0 },

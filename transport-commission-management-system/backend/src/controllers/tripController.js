@@ -13,6 +13,7 @@ export const getTrips = async (req, res, next) => {
         (t) =>
           String(t.slNo).includes(q) ||
           t.vehicleNumber.toLowerCase().includes(q) ||
+          (t.driverPhone && t.driverPhone.toLowerCase().includes(q)) ||
           t.date.includes(q) ||
           t.transport.toLowerCase().includes(q) ||
           t.fromLocation.toLowerCase().includes(q) ||
@@ -141,7 +142,13 @@ export const clearVehicleBalance = async (req, res, next) => {
   try {
     const amountToClear =
       req.body?.amountToClear !== undefined ? req.body.amountToClear : undefined;
-    const result = await tripService.clearVehicleBalance(req.params.id, amountToClear, req.user);
+    const clearedDate = req.body?.clearedDate || req.body?.cleared_date;
+    const result = await tripService.clearVehicleBalance(
+      req.params.id,
+      amountToClear,
+      req.user,
+      clearedDate
+    );
     res.json(result);
   } catch (error) {
     if (error.message === "Trip not found") res.status(404);
@@ -159,7 +166,13 @@ export const clearCompanyBalance = async (req, res, next) => {
   try {
     const amountToClear =
       req.body?.amountToClear !== undefined ? req.body.amountToClear : undefined;
-    const result = await tripService.clearCompanyBalance(req.params.id, amountToClear, req.user);
+    const clearedDate = req.body?.clearedDate || req.body?.cleared_date;
+    const result = await tripService.clearCompanyBalance(
+      req.params.id,
+      amountToClear,
+      req.user,
+      clearedDate
+    );
     res.json(result);
   } catch (error) {
     if (error.message === "Trip not found") res.status(404);

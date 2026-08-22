@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Truck, User, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { User, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
-
+import logo from "/assets/logo.webp";
 export const LoginModal = () => {
   const { login } = useAuth();
 
@@ -32,11 +32,15 @@ export const LoginModal = () => {
       <div className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-8 shadow-lg space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <div className="mx-auto h-11 w-11 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-xs">
-            <Truck className="h-5 w-5" />
+          <div className="mx-auto h-15 w-15 rounded-lg bg-black-600 flex items-center justify-center text-white shadow-xs">
+            <img
+              src={logo}
+              alt="Transport Commission System"
+              className="h-15 w-15 object-contain"
+            />
           </div>
           <h1 className="text-lg font-bold text-slate-900 tracking-tight">
-            Transport Commission System
+            SRS-Transport Commission System
           </h1>
           <p className="text-xs text-slate-500 font-medium">
             Internal Operations Portal • Secure Access

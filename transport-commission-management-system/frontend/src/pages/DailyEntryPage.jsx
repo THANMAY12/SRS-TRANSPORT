@@ -31,6 +31,7 @@ export const DailyEntryPage = ({
   const [formData, setFormData] = useState({
     date: todayStr,
     vehicleNumber: "",
+    driverPhone: "",
     fromLocation: "",
     toLocation: "",
     freight: "",
@@ -67,6 +68,7 @@ export const DailyEntryPage = ({
     setFormData({
       date: todayStr,
       vehicleNumber: "",
+      driverPhone: "",
       fromLocation: "",
       toLocation: "",
       freight: "",
@@ -89,6 +91,7 @@ export const DailyEntryPage = ({
     setFormData({
       date: trip.date,
       vehicleNumber: trip.vehicleNumber,
+      driverPhone: trip.driverPhone || "",
       fromLocation: trip.fromLocation,
       toLocation: trip.toLocation,
       freight: trip.freight ? String(trip.freight) : "",
@@ -127,6 +130,7 @@ export const DailyEntryPage = ({
       const payload = {
         date: formData.date,
         vehicleNumber: formData.vehicleNumber.trim().toUpperCase(),
+        driverPhone: formData.driverPhone.trim(),
         fromLocation: formData.fromLocation.trim(),
         toLocation: formData.toLocation.trim(),
         freight: Number(formData.freight) || 0,
@@ -192,6 +196,7 @@ export const DailyEntryPage = ({
     return (
       String(t.slNo).includes(q) ||
       t.vehicleNumber.toLowerCase().includes(q) ||
+      (t.driverPhone && t.driverPhone.toLowerCase().includes(q)) ||
       t.date.includes(q) ||
       t.transport.toLowerCase().includes(q) ||
       t.fromLocation.toLowerCase().includes(q) ||
@@ -321,6 +326,23 @@ export const DailyEntryPage = ({
                     value={formData.vehicleNumber}
                     onChange={(e) => setFormData({ ...formData, vehicleNumber: e.target.value })}
                     className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-mono uppercase font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="field_driverPhone"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
+                    Driver Phone Number
+                  </label>
+                  <input
+                    id="field_driverPhone"
+                    type="tel"
+                    placeholder="e.g. 9876543210"
+                    value={formData.driverPhone}
+                    onChange={(e) => setFormData({ ...formData, driverPhone: e.target.value })}
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-mono font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
                   />
                 </div>
 
@@ -611,7 +633,12 @@ export const DailyEntryPage = ({
           <tr key={t.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100">
             <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">#{t.slNo}</td>
             <td className="py-2.5 px-3.5 whitespace-nowrap">{formatDate(t.date)}</td>
-            <td className="py-2.5 px-3.5 font-mono font-semibold">{t.vehicleNumber}</td>
+            <td className="py-2.5 px-3.5 font-mono">
+              <div className="font-semibold text-slate-900">{t.vehicleNumber}</div>
+              {t.driverPhone && (
+                <div className="text-[10px] text-slate-500 font-normal">📱 {t.driverPhone}</div>
+              )}
+            </td>
             <td className="py-2.5 px-3.5 whitespace-nowrap">{t.fromLocation}</td>
             <td className="py-2.5 px-3.5 whitespace-nowrap">{t.toLocation}</td>
             <td className="py-2.5 px-3.5 font-mono font-bold text-slate-900">

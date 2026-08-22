@@ -59,6 +59,7 @@ export function mapTripDoc(doc) {
     slNo: obj.sl_no,
     date: obj.date,
     vehicleNumber: obj.vehicle_number,
+    driverPhone: obj.driver_phone || "",
     fromLocation: obj.from_location,
     toLocation: obj.to_location,
     freight: obj.freight,
@@ -105,6 +106,7 @@ export async function createTrip(body, user) {
   const now = new Date().toISOString();
   const dateStr = body.date;
 
+  const driverPhone = body.driverPhone ? body.driverPhone.trim() : "";
   const freight = Number(body.freight) || 0;
   const booking = Number(body.booking) || 0;
   const commission =
@@ -122,6 +124,7 @@ export async function createTrip(body, user) {
     sl_no: nextSlNo,
     date: dateStr,
     vehicle_number: body.vehicleNumber.trim().toUpperCase(),
+    driver_phone: driverPhone,
     from_location: body.fromLocation.trim(),
     to_location: body.toLocation.trim(),
     freight,
@@ -172,6 +175,8 @@ export async function updateTrip(id, body, user) {
 
   const updatedDate = body.date || existingTrip.date;
   const updatedVehicleNumber = (body.vehicleNumber || existingTrip.vehicleNumber).toUpperCase();
+  const updatedDriverPhone =
+    body.driverPhone !== undefined ? body.driverPhone.trim() : existingTrip.driverPhone || "";
   const updatedFrom =
     body.fromLocation !== undefined ? body.fromLocation : existingTrip.fromLocation;
   const updatedTo = body.toLocation !== undefined ? body.toLocation : existingTrip.toLocation;
@@ -209,6 +214,7 @@ export async function updateTrip(id, body, user) {
     {
       date: updatedDate,
       vehicle_number: updatedVehicleNumber,
+      driver_phone: updatedDriverPhone,
       from_location: updatedFrom,
       to_location: updatedTo,
       freight: updatedFreight,
@@ -239,7 +245,7 @@ export async function updateTrip(id, body, user) {
   return updatedTrip;
 }
 
-export async function clearVehicleBalance(id, amountToClear, user) {
+export async function clearVehicleBalance(id, amountToClear, user, clearedDate) {
   const existingTrip = await getTripById(id);
   if (!existingTrip) {
     throw new Error("Trip not found");
@@ -265,6 +271,10 @@ export async function clearVehicleBalance(id, amountToClear, user) {
   const remainingBalance = Math.max(0, currentBalance - clearAmt);
   const isSettled = remainingBalance <= 200;
   const nowStr = new Date().toISOString();
+  const selectedClearedDate =
+    clearedDate && String(clearedDate).trim()
+      ? String(clearedDate).trim()
+      : new Date().toISOString().split("T")[0];
 
   // Atomic update to ensure no negative balance / race conditions
   const updatedDoc = await Trip.findOneAndUpdate(
@@ -278,9 +288,7 @@ export async function clearVehicleBalance(id, amountToClear, user) {
       $inc: { advance_paid_amount: clearAmt },
       $set: {
         vehicle_balance_cleared: isSettled,
-        vehicle_balance_cleared_date: isSettled
-          ? nowStr
-          : existingTrip.vehicleBalanceClearedDate || "",
+        vehicle_balance_cleared_date: selectedClearedDate,
         updated_at: nowStr,
         updated_by: user.username,
       },
@@ -309,7 +317,7 @@ export async function clearVehicleBalance(id, amountToClear, user) {
       : "PARTIAL_BALANCE_CLEARANCE",
     id,
     `Vehicle Balance: Previous Balance ₹${currentBalance}`,
-    `Amount Cleared: ₹${clearAmt} | Remaining Balance: ₹${remainingBalance}${isSettled ? " (Settled <= ₹200)" : ""}`
+    `Amount Cleared: ₹${clearAmt} | Remaining Balance: ₹${remainingBalance}${isSettled ? " (Settled <= ₹200)" : ""} | Cleared Date: ${selectedClearedDate}`
   );
 
   return {
@@ -322,7 +330,7 @@ export async function clearVehicleBalance(id, amountToClear, user) {
   };
 }
 
-export async function clearCompanyBalance(id, amountToClear, user) {
+export async function clearCompanyBalance(id, amountToClear, user, clearedDate) {
   const existingTrip = await getTripById(id);
   if (!existingTrip) {
     throw new Error("Trip not found");
@@ -348,6 +356,10 @@ export async function clearCompanyBalance(id, amountToClear, user) {
   const remainingBalance = Math.max(0, currentBalance - clearAmt);
   const isSettled = remainingBalance <= 200;
   const nowStr = new Date().toISOString();
+  const selectedClearedDate =
+    clearedDate && String(clearedDate).trim()
+      ? String(clearedDate).trim()
+      : new Date().toISOString().split("T")[0];
 
   // Atomic update to ensure no negative balance / race conditions
   const updatedDoc = await Trip.findOneAndUpdate(
@@ -361,9 +373,7 @@ export async function clearCompanyBalance(id, amountToClear, user) {
       $inc: { advance_received_amount: clearAmt },
       $set: {
         company_balance_cleared: isSettled,
-        company_balance_cleared_date: isSettled
-          ? nowStr
-          : existingTrip.companyBalanceClearedDate || "",
+        company_balance_cleared_date: selectedClearedDate,
         updated_at: nowStr,
         updated_by: user.username,
       },
@@ -392,7 +402,7 @@ export async function clearCompanyBalance(id, amountToClear, user) {
       : "PARTIAL_BALANCE_CLEARANCE",
     id,
     `Company Balance: Previous Balance ₹${currentBalance}`,
-    `Amount Cleared: ₹${clearAmt} | Remaining Balance: ₹${remainingBalance}${isSettled ? " (Settled <= ₹200)" : ""}`
+    `Amount Cleared: ₹${clearAmt} | Remaining Balance: ₹${remainingBalance}${isSettled ? " (Settled <= ₹200)" : ""} | Cleared Date: ${selectedClearedDate}`
   );
 
   return {
