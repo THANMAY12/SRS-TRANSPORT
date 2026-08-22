@@ -99,22 +99,22 @@ export const api = {
       body: JSON.stringify(tripData),
     }),
 
-  clearVehicleBalance: (id, amountToClear, clearedDate) => {
+  clearVehicleBalance: (id, amountToClear, clearedDate, remarks) => {
     const body =
       typeof amountToClear === "object" && amountToClear !== null
         ? amountToClear
-        : { amountToClear, clearedDate };
+        : { amountToClear, clearedDate, remarks };
     return request(`/api/trips/${id}/clear-vehicle-balance`, {
       method: "POST",
       body: JSON.stringify(body),
     });
   },
 
-  clearCompanyBalance: (id, amountToClear, clearedDate) => {
+  clearCompanyBalance: (id, amountToClear, clearedDate, remarks) => {
     const body =
       typeof amountToClear === "object" && amountToClear !== null
         ? amountToClear
-        : { amountToClear, clearedDate };
+        : { amountToClear, clearedDate, remarks };
     return request(`/api/trips/${id}/clear-company-balance`, {
       method: "POST",
       body: JSON.stringify(body),

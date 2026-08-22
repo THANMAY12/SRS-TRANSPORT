@@ -143,11 +143,13 @@ export const clearVehicleBalance = async (req, res, next) => {
     const amountToClear =
       req.body?.amountToClear !== undefined ? req.body.amountToClear : undefined;
     const clearedDate = req.body?.clearedDate || req.body?.cleared_date;
+    const remarks = req.body?.remarks;
     const result = await tripService.clearVehicleBalance(
       req.params.id,
       amountToClear,
       req.user,
-      clearedDate
+      clearedDate,
+      remarks
     );
     res.json(result);
   } catch (error) {
@@ -167,11 +169,13 @@ export const clearCompanyBalance = async (req, res, next) => {
     const amountToClear =
       req.body?.amountToClear !== undefined ? req.body.amountToClear : undefined;
     const clearedDate = req.body?.clearedDate || req.body?.cleared_date;
+    const remarks = req.body?.remarks;
     const result = await tripService.clearCompanyBalance(
       req.params.id,
       amountToClear,
       req.user,
-      clearedDate
+      clearedDate,
+      remarks
     );
     res.json(result);
   } catch (error) {

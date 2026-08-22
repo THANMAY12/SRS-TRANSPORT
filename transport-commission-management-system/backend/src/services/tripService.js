@@ -261,7 +261,7 @@ export async function updateTrip(id, body, user) {
   return updatedTrip;
 }
 
-export async function clearVehicleBalance(id, amountToClear, user, clearedDate) {
+export async function clearVehicleBalance(id, amountToClear, user, clearedDate, remarks) {
   const existingTrip = await getTripById(id);
   if (!existingTrip) {
     throw new Error("Trip not found");
@@ -292,6 +292,16 @@ export async function clearVehicleBalance(id, amountToClear, user, clearedDate) 
   }
   const selectedClearedDate = String(clearedDate).trim();
 
+  const setFields = {
+    vehicle_balance_cleared: isSettled,
+    vehicle_balance_cleared_date: selectedClearedDate,
+    updated_at: nowStr,
+    updated_by: user.username,
+  };
+  if (remarks !== undefined && remarks !== null && String(remarks).trim() !== "") {
+    setFields.remarks = String(remarks).trim();
+  }
+
   // Atomic update to ensure no negative balance / race conditions
   const updatedDoc = await Trip.findOneAndUpdate(
     {
@@ -302,12 +312,7 @@ export async function clearVehicleBalance(id, amountToClear, user, clearedDate) 
     },
     {
       $inc: { advance_paid_amount: clearAmt },
-      $set: {
-        vehicle_balance_cleared: isSettled,
-        vehicle_balance_cleared_date: selectedClearedDate,
-        updated_at: nowStr,
-        updated_by: user.username,
-      },
+      $set: setFields,
     },
     { new: true }
   );
@@ -346,7 +351,7 @@ export async function clearVehicleBalance(id, amountToClear, user, clearedDate) 
   };
 }
 
-export async function clearCompanyBalance(id, amountToClear, user, clearedDate) {
+export async function clearCompanyBalance(id, amountToClear, user, clearedDate, remarks) {
   const existingTrip = await getTripById(id);
   if (!existingTrip) {
     throw new Error("Trip not found");
@@ -377,6 +382,16 @@ export async function clearCompanyBalance(id, amountToClear, user, clearedDate) 
   }
   const selectedClearedDate = String(clearedDate).trim();
 
+  const setFields = {
+    company_balance_cleared: isSettled,
+    company_balance_cleared_date: selectedClearedDate,
+    updated_at: nowStr,
+    updated_by: user.username,
+  };
+  if (remarks !== undefined && remarks !== null && String(remarks).trim() !== "") {
+    setFields.remarks = String(remarks).trim();
+  }
+
   // Atomic update to ensure no negative balance / race conditions
   const updatedDoc = await Trip.findOneAndUpdate(
     {
@@ -387,12 +402,7 @@ export async function clearCompanyBalance(id, amountToClear, user, clearedDate) 
     },
     {
       $inc: { advance_received_amount: clearAmt },
-      $set: {
-        company_balance_cleared: isSettled,
-        company_balance_cleared_date: selectedClearedDate,
-        updated_at: nowStr,
-        updated_by: user.username,
-      },
+      $set: setFields,
     },
     { new: true }
   );

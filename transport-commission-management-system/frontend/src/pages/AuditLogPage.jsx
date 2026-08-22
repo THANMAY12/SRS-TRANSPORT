@@ -7,12 +7,14 @@ import {
   XCircle,
   Calendar,
   User as UserIcon,
+  Code,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { PageHeader } from "../components/ui/PageHeader";
 import { DataTable } from "../components/ui/DataTable";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { Toast } from "../components/ui/Toast";
+import { Modal } from "../components/ui/Modal";
 import { api } from "../services/api";
 import {
   formatDate,
@@ -21,12 +23,93 @@ import {
   getTripPaymentStatus,
 } from "../lib/utils";
 
+const tryParseJson = (val) => {
+  if (!val || val === "N/A" || val === "-") return null;
+  const trimmed = String(val).trim();
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (typeof parsed === "object" && parsed !== null) {
+        return parsed;
+      }
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
+const formatValueText = (val) => {
+  if (!val || val === "N/A" || val === "-") return val || "N/A";
+  const parsed = tryParseJson(val);
+  if (parsed && (parsed.slNo || parsed.vehicleNumber)) {
+    const parts = [];
+    parts.push(`Trip #${parsed.slNo ?? (parsed.id || "")}`);
+    if (parsed.vehicleNumber) parts.push(`Vehicle: ${parsed.vehicleNumber}`);
+    if (parsed.fromLocation && parsed.toLocation)
+      parts.push(`Route: ${parsed.fromLocation} -> ${parsed.toLocation}`);
+    if (parsed.freight !== undefined) parts.push(`Freight: Rs.${parsed.freight}`);
+    if (parsed.booking !== undefined) parts.push(`Booking: Rs.${parsed.booking}`);
+    if (parsed.commission !== undefined)
+      parts.push(
+        `Commission: ${parsed.commission !== null ? `Rs.${parsed.commission}` : "Pending"}`
+      );
+    return parts.join(" | ");
+  }
+  return val;
+};
+
+const AuditValueCell = ({ value, onViewJson }) => {
+  if (!value || value === "N/A" || value === "-") {
+    return <span className="text-slate-400 italic">N/A</span>;
+  }
+
+  const parsed = tryParseJson(value);
+  if (parsed) {
+    return (
+      <div className="flex flex-col gap-1 text-xs font-sans py-0.5">
+        <div className="flex items-center gap-1.5 flex-wrap font-sans">
+          <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-mono text-[10px] font-bold">
+            Trip #{parsed.slNo ?? "?"}
+          </span>
+          {parsed.vehicleNumber && (
+            <span className="font-mono text-slate-900 font-semibold">{parsed.vehicleNumber}</span>
+          )}
+        </div>
+        <div className="text-[11px] text-slate-600 font-sans leading-snug">
+          {parsed.fromLocation && parsed.toLocation && (
+            <span className="block">
+              {parsed.fromLocation} → {parsed.toLocation}
+            </span>
+          )}
+          {parsed.freight !== undefined && (
+            <span className="block text-[10px] text-slate-500 font-mono">
+              Freight: ₹{parsed.freight} | Booking: ₹{parsed.booking ?? 0}
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => onViewJson(parsed)}
+          className="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-600 hover:text-blue-800 hover:underline text-left mt-0.5"
+        >
+          <Code className="h-3 w-3" />
+          <span>View JSON Record</span>
+        </button>
+      </div>
+    );
+  }
+
+  return <span className="text-slate-700 text-xs font-medium leading-normal">{value}</span>;
+};
+
 export const AuditLogPage = () => {
   const [logs, setLogs] = useState([]);
   const [userList, setUserList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [toast, setToast] = useState(null);
+  const [viewingJson, setViewingJson] = useState(null);
 
   // Filter States
   const [datePreset, setDatePreset] = useState("today"); // "today" | "yesterday" | "custom" | "all"
@@ -190,8 +273,8 @@ export const AuditLogPage = () => {
         Role: l.userRole,
         Action: l.action,
         Resource: l.tripId || "-",
-        "Previous Value": l.oldValue || "N/A",
-        "New Value": l.newValue || "-",
+        "Previous Value": formatValueText(l.oldValue),
+        "New Value": formatValueText(l.newValue),
       }));
 
       const workbook = XLSX.utils.book_new();
@@ -452,26 +535,58 @@ export const AuditLogPage = () => {
             key={log.id}
             className="hover:bg-slate-50 transition-colors border-b border-slate-100"
           >
-            <td className="py-2.5 px-3.5 font-semibold text-slate-900">{log.username}</td>
-            <td className="py-2.5 px-3.5">
+            <td className="py-2.5 px-3.5 font-semibold text-slate-900 align-top">{log.username}</td>
+            <td className="py-2.5 px-3.5 align-top">
               <StatusBadge
                 type={log.userRole === "ADMIN" ? "admin" : "worker"}
                 text={log.userRole}
                 size="sm"
               />
             </td>
-            <td className="py-2.5 px-3.5 whitespace-nowrap">{formatDate(log.date)}</td>
-            <td className="py-2.5 px-3.5 font-mono text-[11px] text-slate-500">{log.time}</td>
-            <td className="py-2.5 px-3.5 font-mono font-semibold text-blue-700">{log.action}</td>
-            <td className="py-2.5 px-3.5 truncate max-w-[180px] text-slate-400 italic">
-              {log.oldValue || "N/A"}
+            <td className="py-2.5 px-3.5 whitespace-nowrap align-top">{formatDate(log.date)}</td>
+            <td className="py-2.5 px-3.5 font-mono text-[11px] text-slate-500 align-top">
+              {log.time}
             </td>
-            <td className="py-2.5 px-3.5 truncate max-w-[220px] font-medium text-slate-800 font-mono">
-              {log.newValue || "-"}
+            <td className="py-2.5 px-3.5 font-mono font-semibold text-blue-700 align-top">
+              {log.action}
+            </td>
+            <td className="py-2.5 px-3.5 max-w-[240px] align-top">
+              <AuditValueCell value={log.oldValue} onViewJson={(data) => setViewingJson(data)} />
+            </td>
+            <td className="py-2.5 px-3.5 max-w-[280px] align-top">
+              <AuditValueCell value={log.newValue} onViewJson={(data) => setViewingJson(data)} />
             </td>
           </tr>
         )}
       />
+
+      {/* JSON Record Detail Modal */}
+      {viewingJson && (
+        <Modal
+          isOpen={!!viewingJson}
+          onClose={() => setViewingJson(null)}
+          title="Audit Log JSON Record Snapshot"
+          subtitle="Detailed immutable trip state record captured during this audit event."
+          maxWidth="max-w-xl"
+        >
+          <div className="space-y-4 text-xs">
+            <div className="bg-slate-900 text-emerald-400 font-mono p-4 rounded-xl text-[11px] max-h-96 overflow-y-auto leading-relaxed border border-slate-800 shadow-inner">
+              <pre className="whitespace-pre-wrap break-all">
+                {JSON.stringify(viewingJson, null, 2)}
+              </pre>
+            </div>
+            <div className="flex justify-end pt-2 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => setViewingJson(null)}
+                className="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

@@ -19,12 +19,14 @@ export const ClearBalanceModal = ({
 
   const [amount, setAmount] = useState(String(currentBalance));
   const [clearedDate, setClearedDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [remarks, setRemarks] = useState(trip?.remarks || "");
   const [validationError, setValidationError] = useState("");
 
   useEffect(() => {
     if (trip) {
       setAmount(String(currentBalance));
       setClearedDate(new Date().toISOString().split("T")[0]);
+      setRemarks(trip.remarks || "");
       setValidationError("");
     }
   }, [trip, currentBalance]);
@@ -72,7 +74,7 @@ export const ClearBalanceModal = ({
       setValidationError(currentError);
       return;
     }
-    await onConfirm(numAmount, clearedDate);
+    await onConfirm(numAmount, clearedDate, remarks);
   };
 
   const title = isVehicle
@@ -195,6 +197,23 @@ export const ClearBalanceModal = ({
               required
               value={clearedDate}
               onChange={(e) => setClearedDate(e.target.value)}
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-medium text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="modal_remarks_input"
+              className="block text-[11px] font-semibold text-slate-700 uppercase mb-1"
+            >
+              Remarks (Optional)
+            </label>
+            <input
+              id="modal_remarks_input"
+              type="text"
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              placeholder="Add optional notes or remarks"
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-medium text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
             />
           </div>

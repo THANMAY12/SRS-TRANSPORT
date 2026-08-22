@@ -23,11 +23,12 @@ export const PendingCommissionPage = ({ trips, onUpdateTrip, globalSearch, setGl
         t.toLocation.toLowerCase().includes(globalSearch.toLowerCase().trim()))
   );
 
-  const handleSaveCommission = async (id, commissionVal, commissionDueDate) => {
+  const handleSaveCommission = async (id, commissionVal, commissionDueDate, remarksVal) => {
     try {
       await onUpdateTrip(id, {
         commission: commissionVal,
         commissionDueDate: commissionDueDate || new Date().toISOString().split("T")[0],
+        remarks: remarksVal !== undefined ? remarksVal : selectedTrip?.remarks || "",
       });
       setToast({
         type: "success",

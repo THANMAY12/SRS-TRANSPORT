@@ -8,6 +8,7 @@ export const EnterCommissionModal = ({ trip, onClose, onSave }) => {
   const [commissionDueDate, setCommissionDueDate] = useState(
     () => new Date().toISOString().split("T")[0]
   );
+  const [remarks, setRemarks] = useState(trip?.remarks || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -27,7 +28,7 @@ export const EnterCommissionModal = ({ trip, onClose, onSave }) => {
 
     setIsSubmitting(true);
     try {
-      await onSave(trip.id, Number(commission), commissionDueDate);
+      await onSave(trip.id, Number(commission), commissionDueDate, remarks);
       onClose();
     } catch (err) {
       setError(err.message || "Failed to update commission amount.");
@@ -112,6 +113,23 @@ export const EnterCommissionModal = ({ trip, onClose, onSave }) => {
               required
               value={commissionDueDate}
               onChange={(e) => setCommissionDueDate(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="modal_commission_remarks_input"
+              className="block text-[11px] font-semibold text-slate-700 uppercase mb-1"
+            >
+              Remarks (Optional)
+            </label>
+            <input
+              id="modal_commission_remarks_input"
+              type="text"
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              placeholder="Add optional notes or remarks"
               className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
             />
           </div>

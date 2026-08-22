@@ -75,14 +75,14 @@ function MainLayout() {
     await fetchData();
   };
 
-  const handleClearVehicleBalance = async (id, amountToClear, clearedDate) => {
-    const res = await api.clearVehicleBalance(id, amountToClear, clearedDate);
+  const handleClearVehicleBalance = async (id, amountToClear, clearedDate, remarks) => {
+    const res = await api.clearVehicleBalance(id, amountToClear, clearedDate, remarks);
     await fetchData();
     return res;
   };
 
-  const handleClearCompanyBalance = async (id, amountToClear, clearedDate) => {
-    const res = await api.clearCompanyBalance(id, amountToClear, clearedDate);
+  const handleClearCompanyBalance = async (id, amountToClear, clearedDate, remarks) => {
+    const res = await api.clearCompanyBalance(id, amountToClear, clearedDate, remarks);
     await fetchData();
     return res;
   };

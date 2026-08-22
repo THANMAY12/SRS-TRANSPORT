@@ -145,11 +145,9 @@ export const Sidebar = ({ activePage, setActivePage, stats, isOpen, setIsOpen })
             </div>
             <div>
               <h1 className="font-bold text-sm text-slate-900 tracking-tight leading-none">
-                TCMS Operations
+                SRS-Transport
               </h1>
-              <span className="text-[10px] font-medium text-slate-500">
-                Transport Commission System
-              </span>
+              <span className="text-[10px] font-medium text-slate-500">Commission System</span>
             </div>
           </div>
         </div>
