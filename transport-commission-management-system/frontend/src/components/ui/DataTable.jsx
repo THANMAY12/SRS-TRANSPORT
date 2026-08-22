@@ -12,7 +12,9 @@ export const DataTable = ({
     <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-left text-xs border-collapse">
-          <thead className={`${headerBg} text-slate-500 font-semibold text-[11px] uppercase tracking-wider border-b border-slate-200 sticky top-0 z-10`}>
+          <thead
+            className={`${headerBg} text-slate-500 font-semibold text-[11px] uppercase tracking-wider border-b border-slate-200 sticky top-0 z-10`}
+          >
             <tr>
               {columns.map((col, idx) => (
                 <th
@@ -37,7 +39,10 @@ export const DataTable = ({
               ))
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="py-10 text-center text-slate-400 font-medium">
+                <td
+                  colSpan={columns.length}
+                  className="py-10 text-center text-slate-400 font-medium"
+                >
                   {emptyMessage}
                 </td>
               </tr>

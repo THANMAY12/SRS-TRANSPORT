@@ -156,8 +156,7 @@ export const Dashboard = ({
     (stats?.pendingVehicleAdvanceCount || 0) +
     (stats?.pendingCompanyAdvanceCount || 0);
 
-  const totalBalanceItems =
-    (stats?.balanceVehicleCount || 0) + (stats?.balanceCompanyCount || 0);
+  const totalBalanceItems = (stats?.balanceVehicleCount || 0) + (stats?.balanceCompanyCount || 0);
 
   return (
     <div className="space-y-5">
@@ -185,7 +184,7 @@ export const Dashboard = ({
       {/* Row 1: Today's Operational Metrics */}
       <div>
         <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5">
-          Today's operational metrics
+          Today&apos;s operational metrics
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           {todayOperations.map((card) => (
@@ -229,7 +228,8 @@ export const Dashboard = ({
             Operational queue summary
           </h3>
           <p className="text-slate-500 mt-0.5">
-            {totalPendingItems} trips requiring pending input details • {totalBalanceItems} active balances exceeding ₹200.
+            {totalPendingItems} trips requiring pending input details • {totalBalanceItems} active
+            balances exceeding ₹200.
           </p>
         </div>
 
@@ -287,9 +287,7 @@ export const Dashboard = ({
                 key={trip.id}
                 className="hover:bg-slate-50 transition-colors border-b border-slate-100"
               >
-                <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">
-                  #{trip.slNo}
-                </td>
+                <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">#{trip.slNo}</td>
                 <td className="py-2.5 px-3.5 whitespace-nowrap">{formatDate(trip.date)}</td>
                 <td className="py-2.5 px-3.5 font-mono font-semibold">{trip.vehicleNumber}</td>
                 <td className="py-2.5 px-3.5 whitespace-nowrap">
@@ -304,7 +302,9 @@ export const Dashboard = ({
                 <td className="py-2.5 px-3.5 font-mono font-semibold text-slate-900">
                   {trip.commission !== null ? formatCurrency(trip.commission) : "-"}
                 </td>
-                <td className="py-2.5 px-3.5 truncate max-w-[140px] text-slate-700">{trip.transport}</td>
+                <td className="py-2.5 px-3.5 truncate max-w-[140px] text-slate-700">
+                  {trip.transport}
+                </td>
                 <td className="py-2.5 px-3.5">
                   {isComp ? (
                     <StatusBadge type="completed" text="Completed" size="sm" />
@@ -336,10 +336,7 @@ export const Dashboard = ({
       </div>
 
       {/* Trip Detail Modal */}
-      <TripDetailModal
-        trip={selectedTripModal}
-        onClose={() => setSelectedTripModal(null)}
-      />
+      <TripDetailModal trip={selectedTripModal} onClose={() => setSelectedTripModal(null)} />
     </div>
   );
 };

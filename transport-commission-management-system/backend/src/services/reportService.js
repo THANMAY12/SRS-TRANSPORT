@@ -85,7 +85,7 @@ export async function getReports(query) {
     0
   );
   const totalGrossIncome = trips.reduce(
-    (sum, t) => sum + ((t.booking || 0) - (t.commission || 0)),
+    (sum, t) => sum + ((t.booking || 0) - (t.freight || 0) + (t.commission || 0)),
     0
   );
   const totalAdvReceived = trips.reduce((sum, t) => sum + (t.advanceReceivedAmount || 0), 0);

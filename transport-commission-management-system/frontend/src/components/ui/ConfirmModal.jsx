@@ -41,9 +41,7 @@ export const ConfirmModal = ({
             onClick={onConfirm}
             disabled={isLoading}
             className={`px-4 py-1.5 rounded-lg text-white font-semibold text-xs transition-colors shadow-xs ${
-              isDanger
-                ? "bg-rose-600 hover:bg-rose-700"
-                : "bg-blue-600 hover:bg-blue-700"
+              isDanger ? "bg-rose-600 hover:bg-rose-700" : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             {isLoading ? "Processing..." : confirmLabel}

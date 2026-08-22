@@ -75,14 +75,16 @@ function MainLayout() {
     await fetchData();
   };
 
-  const handleClearVehicleBalance = async (id) => {
-    await api.clearVehicleBalance(id);
+  const handleClearVehicleBalance = async (id, amountToClear) => {
+    const res = await api.clearVehicleBalance(id, amountToClear);
     await fetchData();
+    return res;
   };
 
-  const handleClearCompanyBalance = async (id) => {
-    await api.clearCompanyBalance(id);
+  const handleClearCompanyBalance = async (id, amountToClear) => {
+    const res = await api.clearCompanyBalance(id, amountToClear);
     await fetchData();
+    return res;
   };
 
   if (authLoading) {

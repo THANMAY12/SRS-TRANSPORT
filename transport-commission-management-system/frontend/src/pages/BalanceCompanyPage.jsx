@@ -4,8 +4,13 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { DataTable } from "../components/ui/DataTable";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { Toast } from "../components/ui/Toast";
-import { ConfirmModal } from "../components/ui/ConfirmModal";
-import { formatCurrency, formatDate, calculateDaysPending, isBalanceCompanyActive } from "../lib/utils";
+import { ClearBalanceModal } from "../components/modals/ClearBalanceModal";
+import {
+  formatCurrency,
+  formatDate,
+  calculateDaysPending,
+  isBalanceCompanyActive,
+} from "../lib/utils";
 
 export const BalanceCompanyPage = ({ trips, onClearBalance, globalSearch, setGlobalSearch }) => {
   const [confirmClearTrip, setConfirmClearTrip] = useState(null);
@@ -25,14 +30,25 @@ export const BalanceCompanyPage = ({ trips, onClearBalance, globalSearch, setGlo
     );
   });
 
-  const handleConfirmClear = async () => {
+  const handleConfirmClear = async (amountToClear) => {
     if (!confirmClearTrip) return;
     setIsClearing(true);
     try {
-      await onClearBalance(confirmClearTrip.id);
+      const res = await onClearBalance(confirmClearTrip.id, amountToClear);
+      const remaining =
+        res?.remainingBalance !== undefined
+          ? res.remainingBalance
+          : Math.max(
+              0,
+              confirmClearTrip.booking - confirmClearTrip.advanceReceivedAmount - amountToClear
+            );
+      const isSettled = res?.settled || remaining <= 200;
+
       setToast({
         type: "success",
-        message: `Company collection balance for Trip #${confirmClearTrip.slNo} (${confirmClearTrip.transport}) cleared successfully!`,
+        message: isSettled
+          ? `Company collection balance for Trip #${confirmClearTrip.slNo} (${confirmClearTrip.transport}) cleared and settled successfully!`
+          : `Cleared ${formatCurrency(amountToClear)} for Trip #${confirmClearTrip.slNo}. Remaining balance: ${formatCurrency(remaining)}.`,
       });
       setConfirmClearTrip(null);
     } catch (err) {
@@ -72,13 +88,7 @@ export const BalanceCompanyPage = ({ trips, onClearBalance, globalSearch, setGlo
         printId="balance-company-print-btn"
       />
 
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
       {/* Table */}
       <DataTable
@@ -94,16 +104,16 @@ export const BalanceCompanyPage = ({ trips, onClearBalance, globalSearch, setGlo
               key={trip.id}
               className="hover:bg-slate-50 transition-colors border-b border-slate-100"
             >
-              <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">
-                #{trip.slNo}
-              </td>
+              <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">#{trip.slNo}</td>
               <td className="py-2.5 px-3.5 whitespace-nowrap">{formatDate(trip.date)}</td>
               <td className="py-2.5 px-3.5 font-mono font-semibold">{trip.vehicleNumber}</td>
               <td className="py-2.5 px-3.5 font-medium text-slate-900">{trip.transport}</td>
               <td className="py-2.5 px-3.5 font-mono font-bold text-slate-900">
                 {formatCurrency(trip.booking)}
               </td>
-              <td className="py-2.5 px-3.5 font-mono">{formatCurrency(trip.advanceReceivedAmount)}</td>
+              <td className="py-2.5 px-3.5 font-mono">
+                {formatCurrency(trip.advanceReceivedAmount)}
+              </td>
               <td className="py-2.5 px-3.5 font-mono font-bold text-slate-900">
                 {formatCurrency(balanceAmount)}
               </td>
@@ -134,16 +144,12 @@ export const BalanceCompanyPage = ({ trips, onClearBalance, globalSearch, setGlo
         }}
       />
 
-      {/* Confirmation Dialog */}
-      <ConfirmModal
-        isOpen={!!confirmClearTrip}
+      {/* Partial Clearance Dialog */}
+      <ClearBalanceModal
+        trip={confirmClearTrip}
+        type="company"
         onClose={() => setConfirmClearTrip(null)}
         onConfirm={handleConfirmClear}
-        title={`Clear company booking collection?`}
-        message={`Are you sure you want to clear the outstanding company booking collection of ${formatCurrency(
-          confirmClearTrip ? confirmClearTrip.booking - confirmClearTrip.advanceReceivedAmount : 0
-        )} for Trip #${confirmClearTrip?.slNo} (Transport: ${confirmClearTrip?.transport})?`}
-        confirmLabel="Confirm Collection"
         isLoading={isClearing}
       />
     </div>

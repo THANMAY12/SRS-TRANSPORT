@@ -34,12 +34,8 @@ export const Header = ({
         </button>
 
         <div>
-          <h2 className="text-sm font-bold text-slate-900 leading-tight">
-            {pageTitle}
-          </h2>
-          <p className="text-[11px] text-slate-500 hidden sm:block">
-            {pageSubtitle}
-          </p>
+          <h2 className="text-sm font-bold text-slate-900 leading-tight">{pageTitle}</h2>
+          <p className="text-[11px] text-slate-500 hidden sm:block">{pageSubtitle}</p>
         </div>
       </div>
 
@@ -111,12 +107,8 @@ export const Header = ({
         {/* User Badge */}
         <div className="hidden xl:flex items-center gap-2 pl-2 border-l border-slate-200">
           <div className="text-right">
-            <p className="text-xs font-semibold text-slate-900 leading-tight">
-              {user?.username}
-            </p>
-            <span className="text-[10px] text-blue-700 font-semibold uppercase">
-              {user?.role}
-            </span>
+            <p className="text-xs font-semibold text-slate-900 leading-tight">{user?.username}</p>
+            <span className="text-[10px] text-blue-700 font-semibold uppercase">{user?.role}</span>
           </div>
         </div>
       </div>

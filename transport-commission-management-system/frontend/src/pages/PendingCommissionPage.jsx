@@ -66,13 +66,7 @@ export const PendingCommissionPage = ({ trips, onUpdateTrip, globalSearch, setGl
         printId="pending-commission-print-btn"
       />
 
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
       {/* Table */}
       <DataTable
@@ -87,9 +81,7 @@ export const PendingCommissionPage = ({ trips, onUpdateTrip, globalSearch, setGl
               key={trip.id}
               className="hover:bg-slate-50 transition-colors border-b border-slate-100"
             >
-              <td className="py-2.5 px-3.5 font-mono font-bold text-amber-700">
-                #{trip.slNo}
-              </td>
+              <td className="py-2.5 px-3.5 font-mono font-bold text-amber-700">#{trip.slNo}</td>
               <td className="py-2.5 px-3.5 whitespace-nowrap">{formatDate(trip.date)}</td>
               <td className="py-2.5 px-3.5 font-mono font-semibold">{trip.vehicleNumber}</td>
               <td className="py-2.5 px-3.5">{trip.fromLocation}</td>

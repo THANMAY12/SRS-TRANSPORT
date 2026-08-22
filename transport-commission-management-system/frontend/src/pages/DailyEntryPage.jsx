@@ -94,7 +94,8 @@ export const DailyEntryPage = ({
       freight: trip.freight ? String(trip.freight) : "",
       transport: trip.transport,
       booking: trip.booking ? String(trip.booking) : "",
-      commission: trip.commission !== null && trip.commission !== undefined ? String(trip.commission) : "",
+      commission:
+        trip.commission !== null && trip.commission !== undefined ? String(trip.commission) : "",
       commissionReceivedType: trip.commissionReceivedType || "",
       advanceReceivedAmount: trip.advanceReceivedAmount ? String(trip.advanceReceivedAmount) : "",
       advanceReceivedType: trip.advanceReceivedType || "",
@@ -246,13 +247,7 @@ export const DailyEntryPage = ({
       />
 
       {/* Toast Notification */}
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
       {/* Entry Form */}
       {showForm && (
@@ -279,7 +274,10 @@ export const DailyEntryPage = ({
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3.5">
                 <div>
-                  <label htmlFor="field_slNo" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                  <label
+                    htmlFor="field_slNo"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
                     1. Sl.No (Auto)
                   </label>
                   <input
@@ -292,7 +290,10 @@ export const DailyEntryPage = ({
                 </div>
 
                 <div>
-                  <label htmlFor="field_date" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                  <label
+                    htmlFor="field_date"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
                     2. Date *
                   </label>
                   <input
@@ -306,7 +307,10 @@ export const DailyEntryPage = ({
                 </div>
 
                 <div>
-                  <label htmlFor="field_vehicleNumber" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                  <label
+                    htmlFor="field_vehicleNumber"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
                     3. Vehicle number *
                   </label>
                   <input
@@ -321,7 +325,10 @@ export const DailyEntryPage = ({
                 </div>
 
                 <div>
-                  <label htmlFor="field_fromLocation" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                  <label
+                    htmlFor="field_fromLocation"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
                     4. From (Origin) *
                   </label>
                   <input
@@ -336,7 +343,10 @@ export const DailyEntryPage = ({
                 </div>
 
                 <div>
-                  <label htmlFor="field_toLocation" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                  <label
+                    htmlFor="field_toLocation"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
                     5. To (Destination) *
                   </label>
                   <input
@@ -351,7 +361,10 @@ export const DailyEntryPage = ({
                 </div>
 
                 <div>
-                  <label htmlFor="field_transport" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                  <label
+                    htmlFor="field_transport"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
                     7. Transport agency *
                   </label>
                   <input
@@ -374,7 +387,10 @@ export const DailyEntryPage = ({
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                 <div>
-                  <label htmlFor="field_freight" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                  <label
+                    htmlFor="field_freight"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
                     6. Freight (₹ Vehicle)
                   </label>
                   <input
@@ -389,7 +405,10 @@ export const DailyEntryPage = ({
                 </div>
 
                 <div>
-                  <label htmlFor="field_booking" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                  <label
+                    htmlFor="field_booking"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
                     8. Booking (₹ Company)
                   </label>
                   <input
@@ -404,7 +423,10 @@ export const DailyEntryPage = ({
                 </div>
 
                 <div>
-                  <label htmlFor="field_commission" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                  <label
+                    htmlFor="field_commission"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
                     9. Commission (₹ Agent) [Blank = Pending]
                   </label>
                   <input
@@ -419,14 +441,19 @@ export const DailyEntryPage = ({
                 </div>
 
                 <div>
-                  <label htmlFor="field_commissionReceivedType" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                  <label
+                    htmlFor="field_commissionReceivedType"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
                     Commission Received Type
                   </label>
                   <select
                     id="field_commissionReceivedType"
                     disabled={!isCommissionValid}
                     value={formData.commissionReceivedType}
-                    onChange={(e) => setFormData({ ...formData, commissionReceivedType: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, commissionReceivedType: e.target.value })
+                    }
                     className={`w-full px-3 py-1.5 border rounded-lg font-medium text-xs transition-colors ${
                       !isCommissionValid
                         ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
@@ -434,7 +461,9 @@ export const DailyEntryPage = ({
                     }`}
                   >
                     <option value="">
-                      {!isCommissionValid ? "-- Disabled (Enter Commission) --" : "-- Select type --"}
+                      {!isCommissionValid
+                        ? "-- Disabled (Enter Commission) --"
+                        : "-- Select type --"}
                     </option>
                     <option value="Cash">Cash</option>
                     <option value="PhonePe">PhonePe</option>
@@ -451,7 +480,10 @@ export const DailyEntryPage = ({
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
                 <div>
-                  <label htmlFor="field_advanceReceivedAmount" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                  <label
+                    htmlFor="field_advanceReceivedAmount"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
                     10. Adv rec amt (₹)
                   </label>
                   <input
@@ -460,19 +492,26 @@ export const DailyEntryPage = ({
                     min="0"
                     placeholder="e.g. 15000"
                     value={formData.advanceReceivedAmount}
-                    onChange={(e) => setFormData({ ...formData, advanceReceivedAmount: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, advanceReceivedAmount: e.target.value })
+                    }
                     className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold font-mono focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="field_advanceReceivedType" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                  <label
+                    htmlFor="field_advanceReceivedType"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
                     11. Adv rec type [Blank = Pending]
                   </label>
                   <select
                     id="field_advanceReceivedType"
                     value={formData.advanceReceivedType}
-                    onChange={(e) => setFormData({ ...formData, advanceReceivedType: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, advanceReceivedType: e.target.value })
+                    }
                     className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
                   >
                     <option value="">-- Select type (Pending) --</option>
@@ -483,7 +522,10 @@ export const DailyEntryPage = ({
                 </div>
 
                 <div>
-                  <label htmlFor="field_advancePaidAmount" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                  <label
+                    htmlFor="field_advancePaidAmount"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
                     12. Adv paid amt (₹)
                   </label>
                   <input
@@ -492,13 +534,18 @@ export const DailyEntryPage = ({
                     min="0"
                     placeholder="e.g. 10000"
                     value={formData.advancePaidAmount}
-                    onChange={(e) => setFormData({ ...formData, advancePaidAmount: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, advancePaidAmount: e.target.value })
+                    }
                     className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold font-mono focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="field_advancePaidType" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+                  <label
+                    htmlFor="field_advancePaidType"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
                     13. Adv paid type [Blank = Pending]
                   </label>
                   <select
@@ -518,7 +565,10 @@ export const DailyEntryPage = ({
 
             {/* Section 4: Remarks */}
             <div>
-              <label htmlFor="field_remarks" className="block text-[11px] font-semibold text-slate-600 uppercase mb-1">
+              <label
+                htmlFor="field_remarks"
+                className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+              >
                 14. Remarks & operational notes
               </label>
               <input
@@ -558,13 +608,8 @@ export const DailyEntryPage = ({
         data={filteredTrips}
         emptyMessage="No trip entries found in daily entry log."
         renderRow={(t) => (
-          <tr
-            key={t.id}
-            className="hover:bg-slate-50 transition-colors border-b border-slate-100"
-          >
-            <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">
-              #{t.slNo}
-            </td>
+          <tr key={t.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100">
+            <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">#{t.slNo}</td>
             <td className="py-2.5 px-3.5 whitespace-nowrap">{formatDate(t.date)}</td>
             <td className="py-2.5 px-3.5 font-mono font-semibold">{t.vehicleNumber}</td>
             <td className="py-2.5 px-3.5 whitespace-nowrap">{t.fromLocation}</td>
@@ -573,9 +618,7 @@ export const DailyEntryPage = ({
               {formatCurrency(t.freight)}
             </td>
             <td className="py-2.5 px-3.5 truncate max-w-[120px]">{t.transport}</td>
-            <td className="py-2.5 px-3.5 font-mono text-slate-600">
-              {formatCurrency(t.booking)}
-            </td>
+            <td className="py-2.5 px-3.5 font-mono text-slate-600">{formatCurrency(t.booking)}</td>
             <td className="py-2.5 px-3.5 font-mono font-semibold text-slate-900">
               {t.commission !== null ? (
                 formatCurrency(t.commission)

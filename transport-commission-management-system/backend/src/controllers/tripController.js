@@ -139,20 +139,36 @@ export const updateTrip = async (req, res, next) => {
 
 export const clearVehicleBalance = async (req, res, next) => {
   try {
-    const updatedTrip = await tripService.clearVehicleBalance(req.params.id, req.user);
-    res.json(updatedTrip);
+    const amountToClear =
+      req.body?.amountToClear !== undefined ? req.body.amountToClear : undefined;
+    const result = await tripService.clearVehicleBalance(req.params.id, amountToClear, req.user);
+    res.json(result);
   } catch (error) {
     if (error.message === "Trip not found") res.status(404);
+    if (
+      error.message.startsWith("Invalid amount") ||
+      error.message.startsWith("Clearance conflict")
+    ) {
+      res.status(400);
+    }
     next(error);
   }
 };
 
 export const clearCompanyBalance = async (req, res, next) => {
   try {
-    const updatedTrip = await tripService.clearCompanyBalance(req.params.id, req.user);
-    res.json(updatedTrip);
+    const amountToClear =
+      req.body?.amountToClear !== undefined ? req.body.amountToClear : undefined;
+    const result = await tripService.clearCompanyBalance(req.params.id, amountToClear, req.user);
+    res.json(result);
   } catch (error) {
     if (error.message === "Trip not found") res.status(404);
+    if (
+      error.message.startsWith("Invalid amount") ||
+      error.message.startsWith("Clearance conflict")
+    ) {
+      res.status(400);
+    }
     next(error);
   }
 };

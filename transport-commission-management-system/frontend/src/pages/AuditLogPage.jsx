@@ -119,10 +119,7 @@ export const AuditLogPage = () => {
         if (rows && rows.length > 0) {
           const keys = Object.keys(rows[0]);
           ws["!cols"] = keys.map((key) => {
-            const maxLen = Math.max(
-              key.length,
-              ...rows.map((r) => String(r[key] || "").length)
-            );
+            const maxLen = Math.max(key.length, ...rows.map((r) => String(r[key] || "").length));
             return { wch: Math.min(Math.max(maxLen + 3, 10), 45) };
           });
         }
@@ -233,13 +230,7 @@ export const AuditLogPage = () => {
         }
       />
 
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
       {/* Audit Log Table */}
       <DataTable
@@ -252,9 +243,7 @@ export const AuditLogPage = () => {
             key={log.id}
             className="hover:bg-slate-50 transition-colors border-b border-slate-100"
           >
-            <td className="py-2.5 px-3.5 font-semibold text-slate-900">
-              {log.username}
-            </td>
+            <td className="py-2.5 px-3.5 font-semibold text-slate-900">{log.username}</td>
             <td className="py-2.5 px-3.5">
               <StatusBadge
                 type={log.userRole === "ADMIN" ? "admin" : "worker"}
@@ -264,9 +253,7 @@ export const AuditLogPage = () => {
             </td>
             <td className="py-2.5 px-3.5 whitespace-nowrap">{formatDate(log.date)}</td>
             <td className="py-2.5 px-3.5 font-mono text-[11px] text-slate-500">{log.time}</td>
-            <td className="py-2.5 px-3.5 font-mono font-semibold text-blue-700">
-              {log.action}
-            </td>
+            <td className="py-2.5 px-3.5 font-mono font-semibold text-blue-700">{log.action}</td>
             <td className="py-2.5 px-3.5 truncate max-w-[180px] text-slate-400 italic">
               {log.oldValue || "N/A"}
             </td>

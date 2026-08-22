@@ -21,9 +21,7 @@ export const PageHeader = ({
           </span>
         )}
         <h1 className="text-lg font-bold text-slate-900 leading-tight">{title}</h1>
-        {subtitle && (
-          <p className="text-xs text-slate-500 mt-0.5 max-w-2xl">{subtitle}</p>
-        )}
+        {subtitle && <p className="text-xs text-slate-500 mt-0.5 max-w-2xl">{subtitle}</p>}
       </div>
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">

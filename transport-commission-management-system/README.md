@@ -117,7 +117,7 @@ $$\text{Company Balance} = \text{Booking} - \text{Advance Received Amount}$$
 
 $$\text{Difference Amount} = \text{Booking} - \text{Freight}$$
 
-$$\text{Total Gross Income} = \text{Booking} - \text{Commission}$$
+$$\text{Total Gross Income} = (\text{Booking} - \text{Freight}) + \text{Commission}$$
 
 ### Numerical Example:
 
@@ -130,7 +130,7 @@ Given a trip entry:
 
 Calculated Financial Results:
 - **Difference Amount**: $50,000 - 40,000 = \mathbf{₹10,000}$
-- **Total Gross Income**: $50,000 - 3,000 = \mathbf{₹47,000}$
+- **Total Gross Income**: $(50,000 - 40,000) + 3,000 = \mathbf{₹13,000}$
 - **Vehicle Balance**: $40,000 - 15,000 = \mathbf{₹25,000}$ ($> ₹200 \rightarrow$ Pending Vehicle Balance)
 - **Company Balance**: $50,000 - 20,000 = \mathbf{₹30,000}$ ($> ₹200 \rightarrow$ Pending Company Balance)
 

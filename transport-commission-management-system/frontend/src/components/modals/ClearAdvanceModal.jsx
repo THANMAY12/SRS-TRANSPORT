@@ -70,8 +70,7 @@ export const ClearAdvanceModal = ({
               <strong className="font-mono">{trip.vehicleNumber}</strong>
             </div>
             <div>
-              <span className="text-slate-500">Transport:</span>{" "}
-              <strong>{trip.transport}</strong>
+              <span className="text-slate-500">Transport:</span> <strong>{trip.transport}</strong>
             </div>
             <div>
               <span className="text-slate-500">Freight:</span>{" "}

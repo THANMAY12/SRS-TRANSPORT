@@ -99,14 +99,16 @@ export const api = {
       body: JSON.stringify(tripData),
     }),
 
-  clearVehicleBalance: (id) =>
+  clearVehicleBalance: (id, amountToClear) =>
     request(`/api/trips/${id}/clear-vehicle-balance`, {
       method: "POST",
+      body: JSON.stringify({ amountToClear }),
     }),
 
-  clearCompanyBalance: (id) =>
+  clearCompanyBalance: (id, amountToClear) =>
     request(`/api/trips/${id}/clear-company-balance`, {
       method: "POST",
+      body: JSON.stringify({ amountToClear }),
     }),
 
   deleteTrip: (id) =>

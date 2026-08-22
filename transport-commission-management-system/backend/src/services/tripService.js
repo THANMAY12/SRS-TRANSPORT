@@ -239,66 +239,170 @@ export async function updateTrip(id, body, user) {
   return updatedTrip;
 }
 
-export async function clearVehicleBalance(id, user) {
-  const trip = await getTripById(id);
-  if (!trip) {
+export async function clearVehicleBalance(id, amountToClear, user) {
+  const existingTrip = await getTripById(id);
+  if (!existingTrip) {
     throw new Error("Trip not found");
   }
 
+  const currentBalance = getVehicleBalanceAmount(existingTrip);
+
+  const clearAmt =
+    amountToClear !== undefined && amountToClear !== null ? Number(amountToClear) : currentBalance;
+
+  if (typeof clearAmt !== "number" || isNaN(clearAmt)) {
+    throw new Error("Invalid amount: Amount must be a valid number.");
+  }
+  if (clearAmt <= 0) {
+    throw new Error("Invalid amount: Amount to clear must be greater than 0.");
+  }
+  if (clearAmt > currentBalance) {
+    throw new Error(
+      `Invalid amount: Amount to clear (₹${clearAmt}) exceeds current vehicle balance (₹${currentBalance}).`
+    );
+  }
+
+  const remainingBalance = Math.max(0, currentBalance - clearAmt);
+  const isSettled = remainingBalance <= 200;
   const nowStr = new Date().toISOString();
-  await Trip.updateOne(
-    { id },
+
+  // Atomic update to ensure no negative balance / race conditions
+  const updatedDoc = await Trip.findOneAndUpdate(
     {
-      vehicle_balance_cleared: true,
-      vehicle_balance_cleared_date: nowStr,
-      updated_at: nowStr,
-      updated_by: user.username,
-    }
+      id,
+      $expr: {
+        $gte: [{ $subtract: ["$freight", "$advance_paid_amount"] }, clearAmt],
+      },
+    },
+    {
+      $inc: { advance_paid_amount: clearAmt },
+      $set: {
+        vehicle_balance_cleared: isSettled,
+        vehicle_balance_cleared_date: isSettled
+          ? nowStr
+          : existingTrip.vehicleBalanceClearedDate || "",
+        updated_at: nowStr,
+        updated_by: user.username,
+      },
+    },
+    { new: true }
   );
 
-  const updatedTrip = await getTripById(id);
+  if (!updatedDoc) {
+    const recheckedTrip = await getTripById(id);
+    if (!recheckedTrip) {
+      throw new Error("Trip not found");
+    }
+    const freshBal = getVehicleBalanceAmount(recheckedTrip);
+    throw new Error(
+      `Clearance conflict: Current balance has changed (₹${freshBal}). Cannot clear ₹${clearAmt}.`
+    );
+  }
+
+  const updatedTrip = mapTripDoc(updatedDoc);
 
   await addAuditLog(
     user.username,
     user.role,
-    "CLEAR_VEHICLE_BALANCE",
+    isSettled && clearAmt === currentBalance
+      ? "CLEAR_VEHICLE_BALANCE"
+      : "PARTIAL_BALANCE_CLEARANCE",
     id,
-    `Vehicle Balance ${getVehicleBalanceAmount(trip)} pending`,
-    `Vehicle Balance Cleared on ${nowStr}`
+    `Vehicle Balance: Previous Balance ₹${currentBalance}`,
+    `Amount Cleared: ₹${clearAmt} | Remaining Balance: ₹${remainingBalance}${isSettled ? " (Settled <= ₹200)" : ""}`
   );
 
-  return updatedTrip;
+  return {
+    success: true,
+    amountCleared: clearAmt,
+    previousBalance: currentBalance,
+    remainingBalance,
+    settled: isSettled,
+    trip: updatedTrip,
+  };
 }
 
-export async function clearCompanyBalance(id, user) {
-  const trip = await getTripById(id);
-  if (!trip) {
+export async function clearCompanyBalance(id, amountToClear, user) {
+  const existingTrip = await getTripById(id);
+  if (!existingTrip) {
     throw new Error("Trip not found");
   }
 
+  const currentBalance = getCompanyBalanceAmount(existingTrip);
+
+  const clearAmt =
+    amountToClear !== undefined && amountToClear !== null ? Number(amountToClear) : currentBalance;
+
+  if (typeof clearAmt !== "number" || isNaN(clearAmt)) {
+    throw new Error("Invalid amount: Amount must be a valid number.");
+  }
+  if (clearAmt <= 0) {
+    throw new Error("Invalid amount: Amount to clear must be greater than 0.");
+  }
+  if (clearAmt > currentBalance) {
+    throw new Error(
+      `Invalid amount: Amount to clear (₹${clearAmt}) exceeds current company collection balance (₹${currentBalance}).`
+    );
+  }
+
+  const remainingBalance = Math.max(0, currentBalance - clearAmt);
+  const isSettled = remainingBalance <= 200;
   const nowStr = new Date().toISOString();
-  await Trip.updateOne(
-    { id },
+
+  // Atomic update to ensure no negative balance / race conditions
+  const updatedDoc = await Trip.findOneAndUpdate(
     {
-      company_balance_cleared: true,
-      company_balance_cleared_date: nowStr,
-      updated_at: nowStr,
-      updated_by: user.username,
-    }
+      id,
+      $expr: {
+        $gte: [{ $subtract: ["$booking", "$advance_received_amount"] }, clearAmt],
+      },
+    },
+    {
+      $inc: { advance_received_amount: clearAmt },
+      $set: {
+        company_balance_cleared: isSettled,
+        company_balance_cleared_date: isSettled
+          ? nowStr
+          : existingTrip.companyBalanceClearedDate || "",
+        updated_at: nowStr,
+        updated_by: user.username,
+      },
+    },
+    { new: true }
   );
 
-  const updatedTrip = await getTripById(id);
+  if (!updatedDoc) {
+    const recheckedTrip = await getTripById(id);
+    if (!recheckedTrip) {
+      throw new Error("Trip not found");
+    }
+    const freshBal = getCompanyBalanceAmount(recheckedTrip);
+    throw new Error(
+      `Clearance conflict: Current balance has changed (₹${freshBal}). Cannot clear ₹${clearAmt}.`
+    );
+  }
+
+  const updatedTrip = mapTripDoc(updatedDoc);
 
   await addAuditLog(
     user.username,
     user.role,
-    "CLEAR_COMPANY_BALANCE",
+    isSettled && clearAmt === currentBalance
+      ? "CLEAR_COMPANY_BALANCE"
+      : "PARTIAL_BALANCE_CLEARANCE",
     id,
-    `Company Balance ${getCompanyBalanceAmount(trip)} pending`,
-    `Company Balance Cleared on ${nowStr}`
+    `Company Balance: Previous Balance ₹${currentBalance}`,
+    `Amount Cleared: ₹${clearAmt} | Remaining Balance: ₹${remainingBalance}${isSettled ? " (Settled <= ₹200)" : ""}`
   );
 
-  return updatedTrip;
+  return {
+    success: true,
+    amountCleared: clearAmt,
+    previousBalance: currentBalance,
+    remainingBalance,
+    settled: isSettled,
+    trip: updatedTrip,
+  };
 }
 
 export async function deleteTrip(id, user) {

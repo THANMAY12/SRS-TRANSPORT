@@ -17,8 +17,8 @@ export const Toast = ({ type = "info", message, onClose, duration = 4000 }) => {
   const bannerStyles = isSuccess
     ? "bg-emerald-50 border-emerald-200 text-emerald-900"
     : isError
-    ? "bg-rose-50 border-rose-200 text-rose-900"
-    : "bg-blue-50 border-blue-200 text-blue-900";
+      ? "bg-rose-50 border-rose-200 text-rose-900"
+      : "bg-blue-50 border-blue-200 text-blue-900";
 
   return (
     <div
@@ -32,10 +32,7 @@ export const Toast = ({ type = "info", message, onClose, duration = 4000 }) => {
         )}
         <span className="font-medium">{message}</span>
       </div>
-      <button
-        onClick={onClose}
-        className="p-1 rounded text-slate-400 hover:text-slate-600"
-      >
+      <button onClick={onClose} className="p-1 rounded text-slate-400 hover:text-slate-600">
         <X className="h-3.5 w-3.5" />
       </button>
     </div>

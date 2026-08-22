@@ -37,14 +37,8 @@ export const MetricCard = ({
         </div>
 
         <div className="mt-2">
-          <h3 className="text-2xl font-bold text-slate-900 tracking-tight font-mono">
-            {value}
-          </h3>
-          {subtext && (
-            <p className="text-[11px] font-normal text-slate-500 mt-0.5">
-              {subtext}
-            </p>
-          )}
+          <h3 className="text-2xl font-bold text-slate-900 tracking-tight font-mono">{value}</h3>
+          {subtext && <p className="text-[11px] font-normal text-slate-500 mt-0.5">{subtext}</p>}
         </div>
       </div>
 

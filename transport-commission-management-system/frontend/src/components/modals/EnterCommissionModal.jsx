@@ -40,21 +40,20 @@ export const EnterCommissionModal = ({ trip, onClose, onSave }) => {
       <div className="space-y-4 text-xs">
         {/* Context Box */}
         <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-          <p className="text-[10px] font-semibold text-slate-500 uppercase">
-            Trip context
-          </p>
+          <p className="text-[10px] font-semibold text-slate-500 uppercase">Trip context</p>
           <div className="grid grid-cols-2 gap-2 text-slate-800">
             <div>
               <span className="text-slate-500">Vehicle:</span>{" "}
               <strong className="font-mono">{trip.vehicleNumber}</strong>
             </div>
             <div>
-              <span className="text-slate-500">Transport:</span>{" "}
-              <strong>{trip.transport}</strong>
+              <span className="text-slate-500">Transport:</span> <strong>{trip.transport}</strong>
             </div>
             <div>
               <span className="text-slate-500">Route:</span>{" "}
-              <strong>{trip.fromLocation} → {trip.toLocation}</strong>
+              <strong>
+                {trip.fromLocation} → {trip.toLocation}
+              </strong>
             </div>
             <div>
               <span className="text-slate-500">Freight:</span>{" "}

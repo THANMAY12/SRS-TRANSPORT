@@ -127,13 +127,7 @@ export const ManageWorkersPage = () => {
         }
       />
 
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
       {/* Workers Table */}
       <DataTable
@@ -142,20 +136,11 @@ export const ManageWorkersPage = () => {
         isLoading={isLoading}
         emptyMessage="No user accounts found."
         renderRow={(w) => (
-          <tr
-            key={w.id}
-            className="hover:bg-slate-50 transition-colors border-b border-slate-100"
-          >
+          <tr key={w.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100">
             <td className="py-2.5 px-3.5 font-semibold text-slate-900">{w.name}</td>
-            <td className="py-2.5 px-3.5 font-mono font-semibold text-blue-700">
-              @{w.username}
-            </td>
+            <td className="py-2.5 px-3.5 font-mono font-semibold text-blue-700">@{w.username}</td>
             <td className="py-2.5 px-3.5">
-              <StatusBadge
-                type={w.role === "ADMIN" ? "admin" : "worker"}
-                text={w.role}
-                size="sm"
-              />
+              <StatusBadge type={w.role === "ADMIN" ? "admin" : "worker"} text={w.role} size="sm" />
             </td>
             <td className="py-2.5 px-3.5">
               <button
@@ -184,7 +169,9 @@ export const ManageWorkersPage = () => {
                   <Trash2 className="h-4 w-4" />
                 </button>
               ) : (
-                <span className="text-[10px] text-slate-400 font-semibold uppercase">Primary admin</span>
+                <span className="text-[10px] text-slate-400 font-semibold uppercase">
+                  Primary admin
+                </span>
               )}
             </td>
           </tr>

@@ -4,8 +4,13 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { DataTable } from "../components/ui/DataTable";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { Toast } from "../components/ui/Toast";
-import { ConfirmModal } from "../components/ui/ConfirmModal";
-import { formatCurrency, formatDate, calculateDaysPending, isBalanceVehicleActive } from "../lib/utils";
+import { ClearBalanceModal } from "../components/modals/ClearBalanceModal";
+import {
+  formatCurrency,
+  formatDate,
+  calculateDaysPending,
+  isBalanceVehicleActive,
+} from "../lib/utils";
 
 export const BalanceVehiclePage = ({ trips, onClearBalance, globalSearch, setGlobalSearch }) => {
   const [confirmClearTrip, setConfirmClearTrip] = useState(null);
@@ -27,14 +32,25 @@ export const BalanceVehiclePage = ({ trips, onClearBalance, globalSearch, setGlo
     );
   });
 
-  const handleConfirmClear = async () => {
+  const handleConfirmClear = async (amountToClear) => {
     if (!confirmClearTrip) return;
     setIsClearing(true);
     try {
-      await onClearBalance(confirmClearTrip.id);
+      const res = await onClearBalance(confirmClearTrip.id, amountToClear);
+      const remaining =
+        res?.remainingBalance !== undefined
+          ? res.remainingBalance
+          : Math.max(
+              0,
+              confirmClearTrip.freight - confirmClearTrip.advancePaidAmount - amountToClear
+            );
+      const isSettled = res?.settled || remaining <= 200;
+
       setToast({
         type: "success",
-        message: `Vehicle balance for Trip #${confirmClearTrip.slNo} (${confirmClearTrip.vehicleNumber}) cleared successfully!`,
+        message: isSettled
+          ? `Vehicle balance for Trip #${confirmClearTrip.slNo} (${confirmClearTrip.vehicleNumber}) cleared and settled successfully!`
+          : `Cleared ${formatCurrency(amountToClear)} for Trip #${confirmClearTrip.slNo}. Remaining balance: ${formatCurrency(remaining)}.`,
       });
       setConfirmClearTrip(null);
     } catch (err) {
@@ -77,13 +93,7 @@ export const BalanceVehiclePage = ({ trips, onClearBalance, globalSearch, setGlo
         printId="balance-vehicle-print-btn"
       />
 
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
       {/* Table */}
       <DataTable
@@ -99,9 +109,7 @@ export const BalanceVehiclePage = ({ trips, onClearBalance, globalSearch, setGlo
               key={trip.id}
               className="hover:bg-slate-50 transition-colors border-b border-slate-100"
             >
-              <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">
-                #{trip.slNo}
-              </td>
+              <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">#{trip.slNo}</td>
               <td className="py-2.5 px-3.5 whitespace-nowrap">{formatDate(trip.date)}</td>
               <td className="py-2.5 px-3.5 font-mono font-semibold">{trip.vehicleNumber}</td>
               <td className="py-2.5 px-3.5">{trip.fromLocation}</td>
@@ -144,16 +152,12 @@ export const BalanceVehiclePage = ({ trips, onClearBalance, globalSearch, setGlo
         }}
       />
 
-      {/* Confirmation Dialog */}
-      <ConfirmModal
-        isOpen={!!confirmClearTrip}
+      {/* Partial Clearance Dialog */}
+      <ClearBalanceModal
+        trip={confirmClearTrip}
+        type="vehicle"
         onClose={() => setConfirmClearTrip(null)}
         onConfirm={handleConfirmClear}
-        title={`Clear vehicle freight balance?`}
-        message={`Are you sure you want to clear the outstanding vehicle freight balance of ${formatCurrency(
-          confirmClearTrip ? confirmClearTrip.freight - confirmClearTrip.advancePaidAmount : 0
-        )} for Trip #${confirmClearTrip?.slNo} (Vehicle: ${confirmClearTrip?.vehicleNumber})?`}
-        confirmLabel="Confirm Clearance"
         isLoading={isClearing}
       />
     </div>

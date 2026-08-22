@@ -81,7 +81,9 @@ export const NotificationDrawer = ({ isOpen, onClose, stats, onNavigatePage }) =
           {totalNeedsAttention === 0 ? (
             <div className="p-6 text-center rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
               <p className="text-xs font-bold text-slate-800">No pending actions</p>
-              <p className="text-[11px] text-slate-500">All operation queues are currently up to date.</p>
+              <p className="text-[11px] text-slate-500">
+                All operation queues are currently up to date.
+              </p>
             </div>
           ) : (
             <div className="space-y-2.5">
@@ -101,12 +103,8 @@ export const NotificationDrawer = ({ isOpen, onClose, stats, onNavigatePage }) =
                         <Icon className="h-4 w-4" />
                       </div>
                       <div>
-                        <h4 className="text-xs font-semibold text-slate-900">
-                          {item.title}
-                        </h4>
-                        <p className="text-[11px] text-slate-500">
-                          {item.description}
-                        </p>
+                        <h4 className="text-xs font-semibold text-slate-900">{item.title}</h4>
+                        <p className="text-[11px] text-slate-500">{item.description}</p>
                       </div>
                     </div>
 

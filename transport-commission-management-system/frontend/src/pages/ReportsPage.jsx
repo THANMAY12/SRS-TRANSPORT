@@ -68,7 +68,7 @@ export const ReportsPage = () => {
       const freight = t.freight || 0;
       const commission = t.commission !== null && t.commission !== undefined ? t.commission : 0;
       const diffAmount = booking - freight;
-      const grossIncome = booking - commission;
+      const grossIncome = diffAmount + commission;
       const status = getTripPaymentStatus(t);
 
       return {
@@ -82,7 +82,7 @@ export const ReportsPage = () => {
         "Freight (INR)": freight,
         "Difference Amount (Booking - Freight) (INR)": diffAmount,
         "Commission (INR)": t.commission ?? "Pending",
-        "Total Gross Income (Booking - Commission) (INR)": grossIncome,
+        "Total Gross Income ((Booking - Freight) + Commission) (INR)": grossIncome,
         "Payment Status": status,
         "Advance Received (INR)": t.advanceReceivedAmount || 0,
         "Advance Received Type": t.advanceReceivedType || "Pending",
@@ -127,15 +127,19 @@ export const ReportsPage = () => {
 
     // Summary Box
     const s = reportData.summary || {};
-    const diffTotal = s.totalDifferenceAmount !== undefined ? s.totalDifferenceAmount : ((s.totalBooking || 0) - (s.totalFreight || 0));
-    const grossTotal = s.totalGrossIncome !== undefined ? s.totalGrossIncome : ((s.totalBooking || 0) - (s.totalCommission || 0));
+    const diffTotal =
+      s.totalDifferenceAmount !== undefined
+        ? s.totalDifferenceAmount
+        : (s.totalBooking || 0) - (s.totalFreight || 0);
+    const grossTotal =
+      s.totalGrossIncome !== undefined ? s.totalGrossIncome : diffTotal + (s.totalCommission || 0);
 
     doc.setFillColor(247, 248, 250);
     doc.rect(14, 22, 268, 16, "F");
     doc.setFontSize(8);
     doc.setTextColor(0);
     doc.text(
-      `Trips: ${s.totalTrips || 0}  |  Booking: ₹${(s.totalBooking || 0).toLocaleString("en-IN")}  |  Freight: ₹${(s.totalFreight || 0).toLocaleString("en-IN")}  |  Difference (Bk-Fr): ₹${diffTotal.toLocaleString("en-IN")}  |  Gross Income (Bk-Cm): ₹${grossTotal.toLocaleString("en-IN")}  |  Commission: ₹${(s.totalCommission || 0).toLocaleString("en-IN")}`,
+      `Trips: ${s.totalTrips || 0}  |  Booking: ₹${(s.totalBooking || 0).toLocaleString("en-IN")}  |  Freight: ₹${(s.totalFreight || 0).toLocaleString("en-IN")}  |  Difference (Bk-Fr): ₹${diffTotal.toLocaleString("en-IN")}  |  Gross Income ((Bk-Fr)+Cm): ₹${grossTotal.toLocaleString("en-IN")}  |  Commission: ₹${(s.totalCommission || 0).toLocaleString("en-IN")}`,
       18,
       32
     );
@@ -151,7 +155,7 @@ export const ReportsPage = () => {
         "Freight",
         "Difference (Bk-Fr)",
         "Commission",
-        "Gross Income (Bk-Cm)",
+        "Gross Income ((Bk-Fr)+Cm)",
         "Status",
         "Adv Rec",
         "Adv Paid",
@@ -163,7 +167,7 @@ export const ReportsPage = () => {
       const freight = t.freight || 0;
       const commission = t.commission !== null && t.commission !== undefined ? t.commission : 0;
       const diffAmount = booking - freight;
-      const grossIncome = booking - commission;
+      const grossIncome = diffAmount + commission;
       const status = getTripPaymentStatus(t);
 
       return [
@@ -202,8 +206,14 @@ export const ReportsPage = () => {
   };
 
   const s = reportData.summary || {};
-  const calcDiffTotal = s.totalDifferenceAmount !== undefined ? s.totalDifferenceAmount : ((s.totalBooking || 0) - (s.totalFreight || 0));
-  const calcGrossTotal = s.totalGrossIncome !== undefined ? s.totalGrossIncome : ((s.totalBooking || 0) - (s.totalCommission || 0));
+  const calcDiffTotal =
+    s.totalDifferenceAmount !== undefined
+      ? s.totalDifferenceAmount
+      : (s.totalBooking || 0) - (s.totalFreight || 0);
+  const calcGrossTotal =
+    s.totalGrossIncome !== undefined
+      ? s.totalGrossIncome
+      : calcDiffTotal + (s.totalCommission || 0);
 
   const columns = [
     { title: "Sl.No" },
@@ -214,7 +224,7 @@ export const ReportsPage = () => {
     { title: "Freight" },
     { title: "Difference Amount (Booking - Freight)" },
     { title: "Commission" },
-    { title: "Total Gross Income (Booking - Commission)" },
+    { title: "Total Gross Income (Diff + Comm)" },
     { title: "Payment Status" },
     { title: "Adv Received" },
     { title: "Adv Paid" },
@@ -250,13 +260,7 @@ export const ReportsPage = () => {
         }
       />
 
-      {toast && (
-        <Toast
-          type={toast.type}
-          message={toast.message}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
       {/* Filter Controls Bar */}
       <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
@@ -268,7 +272,10 @@ export const ReportsPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3.5 text-xs">
           {/* Period Selector */}
           <div>
-            <label htmlFor="field_reportPeriod" className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]">
+            <label
+              htmlFor="field_reportPeriod"
+              className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]"
+            >
               Report period
             </label>
             <select
@@ -286,7 +293,10 @@ export const ReportsPage = () => {
 
           {/* Vehicle Filter */}
           <div>
-            <label htmlFor="field_vehicleFilter" className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]">
+            <label
+              htmlFor="field_vehicleFilter"
+              className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]"
+            >
               Vehicle number
             </label>
             <input
@@ -301,7 +311,10 @@ export const ReportsPage = () => {
 
           {/* Transport Filter */}
           <div>
-            <label htmlFor="field_transportFilter" className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]">
+            <label
+              htmlFor="field_transportFilter"
+              className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]"
+            >
               Transport name
             </label>
             <input
@@ -318,7 +331,10 @@ export const ReportsPage = () => {
           {reportPeriod === "custom" && (
             <>
               <div>
-                <label htmlFor="field_startDate" className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]">
+                <label
+                  htmlFor="field_startDate"
+                  className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]"
+                >
                   Start date
                 </label>
                 <input
@@ -331,7 +347,10 @@ export const ReportsPage = () => {
               </div>
 
               <div>
-                <label htmlFor="field_endDate" className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]">
+                <label
+                  htmlFor="field_endDate"
+                  className="block font-semibold text-slate-600 mb-1 uppercase text-[10px]"
+                >
                   End date
                 </label>
                 <input
@@ -362,9 +381,7 @@ export const ReportsPage = () => {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
         <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
           <p className="text-[11px] font-semibold text-slate-500 uppercase">Total trips</p>
-          <p className="text-xl font-bold text-slate-900 font-mono mt-1">
-            {s.totalTrips || 0}
-          </p>
+          <p className="text-xl font-bold text-slate-900 font-mono mt-1">{s.totalTrips || 0}</p>
         </div>
 
         <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
@@ -382,14 +399,18 @@ export const ReportsPage = () => {
         </div>
 
         <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
-          <p className="text-[11px] font-semibold text-slate-500 uppercase">Difference (Booking - Freight)</p>
+          <p className="text-[11px] font-semibold text-slate-500 uppercase">
+            Difference (Booking - Freight)
+          </p>
           <p className="text-xl font-bold text-blue-700 font-mono mt-1">
             {formatCurrency(calcDiffTotal)}
           </p>
         </div>
 
         <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
-          <p className="text-[11px] font-semibold text-slate-500 uppercase">Total gross income (Booking - Comm)</p>
+          <p className="text-[11px] font-semibold text-slate-500 uppercase">
+            Total gross income (Diff + Comm)
+          </p>
           <p className="text-xl font-bold text-emerald-700 font-mono mt-1">
             {formatCurrency(calcGrossTotal)}
           </p>
@@ -426,9 +447,10 @@ export const ReportsPage = () => {
           renderRow={(t) => {
             const booking = t.booking || 0;
             const freight = t.freight || 0;
-            const commission = t.commission !== null && t.commission !== undefined ? t.commission : 0;
+            const commission =
+              t.commission !== null && t.commission !== undefined ? t.commission : 0;
             const diffAmount = booking - freight;
-            const grossIncome = booking - commission;
+            const grossIncome = diffAmount + commission;
             const status = getTripPaymentStatus(t);
 
             return (
@@ -439,28 +461,40 @@ export const ReportsPage = () => {
                 <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">#{t.slNo}</td>
                 <td className="py-2.5 px-3.5 whitespace-nowrap">{formatDate(t.date)}</td>
                 <td className="py-2.5 px-3.5 font-mono font-semibold">{t.vehicleNumber}</td>
-                <td className="py-2.5 px-3.5 truncate max-w-[120px] text-slate-700">{t.transport}</td>
-                <td className="py-2.5 px-3.5 font-mono font-bold text-slate-900">{formatCurrency(booking)}</td>
-                <td className="py-2.5 px-3.5 font-mono font-bold text-slate-900">{formatCurrency(freight)}</td>
-                <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">{formatCurrency(diffAmount)}</td>
+                <td className="py-2.5 px-3.5 truncate max-w-[120px] text-slate-700">
+                  {t.transport}
+                </td>
+                <td className="py-2.5 px-3.5 font-mono font-bold text-slate-900">
+                  {formatCurrency(booking)}
+                </td>
+                <td className="py-2.5 px-3.5 font-mono font-bold text-slate-900">
+                  {formatCurrency(freight)}
+                </td>
+                <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">
+                  {formatCurrency(diffAmount)}
+                </td>
                 <td className="py-2.5 px-3.5 font-mono font-semibold text-slate-900">
                   {t.commission !== null ? formatCurrency(t.commission) : "Pending"}
                 </td>
-                <td className="py-2.5 px-3.5 font-mono font-bold text-emerald-700">{formatCurrency(grossIncome)}</td>
+                <td className="py-2.5 px-3.5 font-mono font-bold text-emerald-700">
+                  {formatCurrency(grossIncome)}
+                </td>
                 <td className="py-2.5 px-3.5">
                   <StatusBadge
                     type={
                       status === "Completed"
                         ? "completed"
                         : status.startsWith("Pending")
-                        ? "pending"
-                        : "balance-due"
+                          ? "pending"
+                          : "balance-due"
                     }
                     text={status}
                     size="sm"
                   />
                 </td>
-                <td className="py-2.5 px-3.5 font-mono">{formatCurrency(t.advanceReceivedAmount)}</td>
+                <td className="py-2.5 px-3.5 font-mono">
+                  {formatCurrency(t.advanceReceivedAmount)}
+                </td>
                 <td className="py-2.5 px-3.5 font-mono">{formatCurrency(t.advancePaidAmount)}</td>
               </tr>
             );
