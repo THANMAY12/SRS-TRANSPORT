@@ -7,14 +7,12 @@ import {
   XCircle,
   Calendar,
   User as UserIcon,
-  Code,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { PageHeader } from "../components/ui/PageHeader";
 import { DataTable } from "../components/ui/DataTable";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { Toast } from "../components/ui/Toast";
-import { Modal } from "../components/ui/Modal";
 import { api } from "../services/api";
 import {
   formatDate,
@@ -59,7 +57,7 @@ const formatValueText = (val) => {
   return val;
 };
 
-const AuditValueCell = ({ value, onViewJson }) => {
+const AuditValueCell = ({ value }) => {
   if (!value || value === "N/A" || value === "-") {
     return <span className="text-slate-400 italic">N/A</span>;
   }
@@ -73,7 +71,9 @@ const AuditValueCell = ({ value, onViewJson }) => {
             Trip #{parsed.slNo ?? "?"}
           </span>
           {parsed.vehicleNumber && (
-            <span className="font-mono text-slate-900 font-semibold">{parsed.vehicleNumber}</span>
+            <span className="font-mono text-slate-900 font-semibold font-mono">
+              {parsed.vehicleNumber}
+            </span>
           )}
         </div>
         <div className="text-[11px] text-slate-600 font-sans leading-snug">
@@ -88,14 +88,6 @@ const AuditValueCell = ({ value, onViewJson }) => {
             </span>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => onViewJson(parsed)}
-          className="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-600 hover:text-blue-800 hover:underline text-left mt-0.5"
-        >
-          <Code className="h-3 w-3" />
-          <span>View JSON Record</span>
-        </button>
       </div>
     );
   }
@@ -109,7 +101,6 @@ export const AuditLogPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [toast, setToast] = useState(null);
-  const [viewingJson, setViewingJson] = useState(null);
 
   // Filter States
   const [datePreset, setDatePreset] = useState("today"); // "today" | "yesterday" | "custom" | "all"
@@ -551,42 +542,14 @@ export const AuditLogPage = () => {
               {log.action}
             </td>
             <td className="py-2.5 px-3.5 max-w-[240px] align-top">
-              <AuditValueCell value={log.oldValue} onViewJson={(data) => setViewingJson(data)} />
+              <AuditValueCell value={log.oldValue} />
             </td>
             <td className="py-2.5 px-3.5 max-w-[280px] align-top">
-              <AuditValueCell value={log.newValue} onViewJson={(data) => setViewingJson(data)} />
+              <AuditValueCell value={log.newValue} />
             </td>
           </tr>
         )}
       />
-
-      {/* JSON Record Detail Modal */}
-      {viewingJson && (
-        <Modal
-          isOpen={!!viewingJson}
-          onClose={() => setViewingJson(null)}
-          title="Audit Log JSON Record Snapshot"
-          subtitle="Detailed immutable trip state record captured during this audit event."
-          maxWidth="max-w-xl"
-        >
-          <div className="space-y-4 text-xs">
-            <div className="bg-slate-900 text-emerald-400 font-mono p-4 rounded-xl text-[11px] max-h-96 overflow-y-auto leading-relaxed border border-slate-800 shadow-inner">
-              <pre className="whitespace-pre-wrap break-all">
-                {JSON.stringify(viewingJson, null, 2)}
-              </pre>
-            </div>
-            <div className="flex justify-end pt-2 border-t border-slate-200">
-              <button
-                type="button"
-                onClick={() => setViewingJson(null)}
-                className="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
     </div>
   );
 };
