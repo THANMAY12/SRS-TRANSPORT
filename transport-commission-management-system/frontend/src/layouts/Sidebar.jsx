@@ -14,7 +14,6 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import logo from "../assets/logo.webp";
 export const Sidebar = ({ activePage, setActivePage, stats, isOpen, setIsOpen }) => {
   const { user, logout } = useAuth();
 
@@ -139,7 +138,7 @@ export const Sidebar = ({ activePage, setActivePage, stats, isOpen, setIsOpen })
           <div className="flex items-center gap-2.5">
             <div className="h-8 w-8 rounded-lg flex items-center justify-center text-white shadow-xs">
               <img
-                src={logo}
+                src="/logo.webp"
                 alt="Transport Commission System"
                 className="h-8 w-8 object-contain"
               />

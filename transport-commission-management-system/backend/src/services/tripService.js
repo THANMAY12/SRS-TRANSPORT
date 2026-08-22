@@ -271,10 +271,10 @@ export async function clearVehicleBalance(id, amountToClear, user, clearedDate) 
   const remainingBalance = Math.max(0, currentBalance - clearAmt);
   const isSettled = remainingBalance <= 200;
   const nowStr = new Date().toISOString();
-  const selectedClearedDate =
-    clearedDate && String(clearedDate).trim()
-      ? String(clearedDate).trim()
-      : new Date().toISOString().split("T")[0];
+  if (!clearedDate || !String(clearedDate).trim()) {
+    throw new Error("Invalid clearance date: Clearance date is required.");
+  }
+  const selectedClearedDate = String(clearedDate).trim();
 
   // Atomic update to ensure no negative balance / race conditions
   const updatedDoc = await Trip.findOneAndUpdate(
@@ -356,10 +356,10 @@ export async function clearCompanyBalance(id, amountToClear, user, clearedDate) 
   const remainingBalance = Math.max(0, currentBalance - clearAmt);
   const isSettled = remainingBalance <= 200;
   const nowStr = new Date().toISOString();
-  const selectedClearedDate =
-    clearedDate && String(clearedDate).trim()
-      ? String(clearedDate).trim()
-      : new Date().toISOString().split("T")[0];
+  if (!clearedDate || !String(clearedDate).trim()) {
+    throw new Error("Invalid clearance date: Clearance date is required.");
+  }
+  const selectedClearedDate = String(clearedDate).trim();
 
   // Atomic update to ensure no negative balance / race conditions
   const updatedDoc = await Trip.findOneAndUpdate(

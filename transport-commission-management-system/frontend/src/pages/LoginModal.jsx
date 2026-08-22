@@ -2,21 +2,18 @@ import React, { useState } from "react";
 import { User, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../services/api";
-import logo from "/assets/logo.webp";
+
 export const LoginModal = () => {
   const { login } = useAuth();
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg(null);
     setIsLoading(true);
-
     try {
       const res = await api.login(username, password);
       login(res.token, res.user);
@@ -26,7 +23,6 @@ export const LoginModal = () => {
       setIsLoading(false);
     }
   };
-
   return (
     <div className="fixed inset-0 z-50 bg-[#F7F8FA] flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white border border-slate-200 rounded-xl p-8 shadow-lg space-y-6">
@@ -34,7 +30,7 @@ export const LoginModal = () => {
         <div className="text-center space-y-2">
           <div className="mx-auto h-15 w-15 rounded-lg bg-black-600 flex items-center justify-center text-white shadow-xs">
             <img
-              src={logo}
+              src="/logo.webp"
               alt="Transport Commission System"
               className="h-15 w-15 object-contain"
             />
