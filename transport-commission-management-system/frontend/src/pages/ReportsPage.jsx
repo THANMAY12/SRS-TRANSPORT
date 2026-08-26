@@ -9,6 +9,7 @@ import { StatusBadge } from "../components/ui/StatusBadge";
 import { Toast } from "../components/ui/Toast";
 import { TripDetailModal } from "../components/modals/TripDetailModal";
 import { api } from "../services/api";
+import { loadCustomPdfFont } from "../lib/pdfFontLoader";
 import {
   formatCurrency,
   formatDate,
@@ -128,28 +129,29 @@ export const ReportsPage = () => {
   };
 
   // Export to PDF
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     if (reportData.trips.length === 0) {
       setToast({ type: "error", message: "No trip records available to export." });
       return;
     }
 
-    const doc = new jsPDF({ orientation: "landscape" });
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const fontLoaded = await loadCustomPdfFont(doc);
 
     // Title & Header
     doc.setFontSize(14);
-    doc.setTextColor(23, 32, 51);
-    doc.text("Transport Commission Management Report", 14, 13);
+    doc.setTextColor(15, 23, 42);
+    doc.text("Transport Financial Report", 14, 12);
 
-    doc.setFontSize(8);
-    doc.setTextColor(100);
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 116, 139);
     doc.text(
-      `Generated on: ${new Date().toLocaleString("en-IN")} | Period: ${reportPeriod.toUpperCase()}`,
+      `Generated on: ${new Date().toLocaleString("en-IN")} | Period: ${reportPeriod.toUpperCase()} | Vehicle: ${vehicleFilter || "All"} | Transport: ${transportFilter || "All"}`,
       14,
-      19
+      17
     );
 
-    // Summary Box
+    // Summary Box (Structured 2-row layout with no horizontal clipping)
     const s = reportData.summary || {};
     const bookingTotal =
       s.totalBooking !== undefined
@@ -185,14 +187,25 @@ export const ReportsPage = () => {
             0
           );
 
-    doc.setFillColor(247, 248, 250);
-    doc.rect(14, 22, 268, 16, "F");
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(203, 213, 225);
+    doc.roundedRect(14, 20, 269, 18, 2, 2, "FD");
+
     doc.setFontSize(7.5);
-    doc.setTextColor(0);
+    doc.setTextColor(30, 41, 59);
+
+    // Row 1 of Summary Box
     doc.text(
-      `Trips: ${s.totalTrips || 0}  |  Booking: ₹${bookingTotal.toLocaleString("en-IN")}  |  Freight: ₹${(s.totalFreight || 0).toLocaleString("en-IN")}  |  Diff (Bk-Fr): ₹${diffTotal.toLocaleString("en-IN")}  |  Account Refund: ₹${accountRefundTotal.toLocaleString("en-IN")}  |  Comm: ₹${(s.totalCommission || 0).toLocaleString("en-IN")} (Cash: ₹${cashTotal.toLocaleString("en-IN")}, PhonePe: ₹${phonePeTotal.toLocaleString("en-IN")})  |  Gross Income: ₹${grossTotal.toLocaleString("en-IN")}`,
+      `Trips: ${s.totalTrips || 0}   |   Total Booking: ₹${bookingTotal.toLocaleString("en-IN")}   |   Total Freight: ₹${(s.totalFreight || 0).toLocaleString("en-IN")}   |   Difference Amount: ₹${diffTotal.toLocaleString("en-IN")}`,
       18,
-      32
+      26
+    );
+
+    // Row 2 of Summary Box
+    doc.text(
+      `Account Refund: ₹${accountRefundTotal.toLocaleString("en-IN")}   |   Total Gross Income: ₹${grossTotal.toLocaleString("en-IN")}   |   Total Commission: ₹${(s.totalCommission || 0).toLocaleString("en-IN")} (Cash: ₹${cashTotal.toLocaleString("en-IN")} | PhonePe: ₹${phonePeTotal.toLocaleString("en-IN")})`,
+      18,
+      33
     );
 
     // Table Data
@@ -204,14 +217,14 @@ export const ReportsPage = () => {
         "Transport",
         "Booking",
         "Freight",
-        "Diff (Bk-Fr)",
+        "Difference Amount",
         "Account Refund",
         "Commission",
-        "Cash Comm",
-        "PhonePe Comm",
-        "Gross Income",
-        "Status",
-        "Adv Rec",
+        "Cash Commission",
+        "PhonePe Commission",
+        "Total Gross Income",
+        "Payment Status",
+        "Adv Received",
         "Adv Paid",
       ],
     ];
@@ -253,14 +266,42 @@ export const ReportsPage = () => {
       body: tableRows,
       startY: 42,
       theme: "grid",
+      styles: {
+        font: fontLoaded ? "CustomFont" : "helvetica",
+        fontSize: 6,
+        cellPadding: 1.5,
+        valign: "middle",
+        textColor: [15, 23, 42],
+        lineColor: [226, 232, 240],
+        lineWidth: 0.1,
+        overflow: "linebreak",
+      },
       headStyles: {
         fillColor: [37, 99, 235],
         textColor: 255,
-        fontSize: 7,
-        fontStyle: "bold",
+        font: fontLoaded ? "CustomFont" : "helvetica",
+        fontStyle: fontLoaded ? "normal" : "bold",
+        fontSize: 6,
+        halign: "center",
       },
-      bodyStyles: { fontSize: 7 },
       alternateRowStyles: { fillColor: [248, 250, 252] },
+      columnStyles: {
+        0: { halign: "center", cellWidth: 10 },
+        1: { halign: "center", cellWidth: 15 },
+        2: { halign: "left", cellWidth: 19 },
+        3: { halign: "left", cellWidth: 22 },
+        4: { halign: "right", cellWidth: 18 },
+        5: { halign: "right", cellWidth: 18 },
+        6: { halign: "right", cellWidth: 19 },
+        7: { halign: "right", cellWidth: 19 },
+        8: { halign: "right", cellWidth: 17 },
+        9: { halign: "right", cellWidth: 17 },
+        10: { halign: "right", cellWidth: 17 },
+        11: { halign: "right", cellWidth: 19 },
+        12: { halign: "center", cellWidth: 18 },
+        13: { halign: "right", cellWidth: 15 },
+        14: { halign: "right", cellWidth: 15 },
+      },
     });
 
     doc.save(`Transport_Report_${reportPeriod}_${new Date().toISOString().split("T")[0]}.pdf`);
@@ -306,12 +347,12 @@ export const ReportsPage = () => {
     { title: "Transport" },
     { title: "Booking" },
     { title: "Freight" },
-    { title: "Difference Amount (Booking - Freight)" },
+    { title: "Difference Amount" },
     { title: "Account Refund" },
     { title: "Commission" },
     { title: "Cash Commission" },
     { title: "PhonePe Commission" },
-    { title: "Total Gross Income (Diff + Comm)" },
+    { title: "Total Gross Income" },
     { title: "Payment Status" },
     { title: "Adv Received" },
     { title: "Adv Paid" },
