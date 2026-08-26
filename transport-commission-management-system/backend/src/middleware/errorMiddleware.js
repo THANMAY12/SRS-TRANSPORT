@@ -1,3 +1,5 @@
+import { formatDisplayDate } from "../services/tripService.js";
+
 export function errorHandler(err, req, res, next) {
   console.error("Error:", err.message);
   let statusCode = res.statusCode !== 200 ? res.statusCode : 500;
@@ -5,7 +7,9 @@ export function errorHandler(err, req, res, next) {
 
   if (err.code === 11000) {
     statusCode = 409;
-    if (err.keyValue && err.keyValue.sl_no !== undefined) {
+    if (err.keyValue && err.keyValue.sl_no !== undefined && err.keyValue.date !== undefined) {
+      message = `Sl.No ${err.keyValue.sl_no} already exists for ${formatDisplayDate(err.keyValue.date)}. Please enter a different Sl.No.`;
+    } else if (err.keyValue && err.keyValue.sl_no !== undefined) {
       message = `Sl.No ${err.keyValue.sl_no} already exists. Please enter a different Sl.No.`;
     } else {
       message = "A record with this identifier already exists.";

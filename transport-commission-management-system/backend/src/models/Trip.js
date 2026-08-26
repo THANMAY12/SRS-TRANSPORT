@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const tripSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
-  sl_no: { type: Number, required: true, unique: true },
+  sl_no: { type: Number, required: true },
   date: { type: String, required: true },
   vehicle_number: { type: String, required: true },
   driver_phone: { type: String, default: "" },
@@ -30,5 +30,7 @@ const tripSchema = new mongoose.Schema({
   created_by: { type: String, required: true },
   updated_by: { type: String, required: true },
 });
+
+tripSchema.index({ date: 1, sl_no: 1 }, { unique: true });
 
 export const Trip = mongoose.model("Trip", tripSchema);

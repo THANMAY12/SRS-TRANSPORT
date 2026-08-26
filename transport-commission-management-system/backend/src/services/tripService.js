@@ -126,8 +126,33 @@ export function mapTripDoc(doc) {
   };
 }
 
+export function formatDisplayDate(dateStr) {
+  if (!dateStr) return "";
+  try {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    if (!y || !m || !d) return dateStr;
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    return `${d} ${months[m - 1]} ${y}`;
+  } catch (e) {
+    return dateStr;
+  }
+}
+
 export async function getAllTrips() {
-  const trips = await Trip.find().sort({ sl_no: -1 }).lean();
+  const trips = await Trip.find().sort({ date: -1, sl_no: -1 }).lean();
   return trips.map(mapTripDoc);
 }
 
@@ -150,14 +175,20 @@ export async function createTrip(body, user) {
     throw new Error("Sl.No is required and must be a positive integer greater than 0.");
   }
 
-  const existingSlNoTrip = await Trip.findOne({ sl_no: slNoNum }).lean();
-  if (existingSlNoTrip) {
-    throw new Error(`Sl.No ${slNoNum} already exists. Please enter a different Sl.No.`);
+  const dateStr = body.date;
+  if (!dateStr) {
+    throw new Error("Date is required.");
+  }
+
+  const existingDailyTrip = await Trip.findOne({ date: dateStr, sl_no: slNoNum }).lean();
+  if (existingDailyTrip) {
+    throw new Error(
+      `Sl.No ${slNoNum} already exists for ${formatDisplayDate(dateStr)}. Please enter a different Sl.No.`
+    );
   }
 
   const tripId = "trip_" + Date.now();
   const now = new Date().toISOString();
-  const dateStr = body.date;
 
   const driverPhone = body.driverPhone ? body.driverPhone.trim() : "";
   const freight = Number(body.freight) || 0;
@@ -258,16 +289,23 @@ export async function updateTrip(id, body, user) {
     ) {
       throw new Error("Sl.No is required and must be a positive integer greater than 0.");
     }
-    if (slNoNum !== existingTrip.slNo) {
-      const existingSlNoTrip = await Trip.findOne({ sl_no: slNoNum, id: { $ne: id } }).lean();
-      if (existingSlNoTrip) {
-        throw new Error(`Sl.No ${slNoNum} already exists. Please enter a different Sl.No.`);
-      }
-    }
     updatedSlNo = slNoNum;
   }
 
   const updatedDate = body.date || existingTrip.date;
+
+  if (updatedSlNo !== existingTrip.slNo || updatedDate !== existingTrip.date) {
+    const existingDailyTrip = await Trip.findOne({
+      date: updatedDate,
+      sl_no: updatedSlNo,
+      id: { $ne: id },
+    }).lean();
+    if (existingDailyTrip) {
+      throw new Error(
+        `Sl.No ${updatedSlNo} already exists for ${formatDisplayDate(updatedDate)}. Please enter a different Sl.No.`
+      );
+    }
+  }
   const updatedVehicleNumber = (body.vehicleNumber || existingTrip.vehicleNumber).toUpperCase();
   const updatedDriverPhone =
     body.driverPhone !== undefined ? body.driverPhone.trim() : existingTrip.driverPhone || "";
