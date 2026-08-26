@@ -5,6 +5,7 @@ import { Sidebar } from "./layouts/Sidebar";
 import { Header } from "./layouts/Header";
 import { Dashboard } from "./pages/Dashboard";
 import { DailyEntryPage } from "./pages/DailyEntryPage";
+import { PendingBookingPage } from "./pages/PendingBookingPage";
 import { PendingCommissionPage } from "./pages/PendingCommissionPage";
 import { PendingAdvanceVehiclePage } from "./pages/PendingAdvanceVehiclePage";
 import { PendingAdvanceCompanyPage } from "./pages/PendingAdvanceCompanyPage";
@@ -29,7 +30,6 @@ function MainLayout() {
 
   const [stats, setStats] = useState(null);
   const [trips, setTrips] = useState([]);
-  const [nextSlNo, setNextSlNo] = useState(1);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const activePage = location.pathname.substring(1) || "dashboard";
@@ -41,13 +41,6 @@ function MainLayout() {
       const [statsData, tripsData] = await Promise.all([api.getDashboardStats(), api.getTrips()]);
       setStats(statsData);
       setTrips(tripsData);
-
-      if (tripsData.length > 0) {
-        const maxSl = Math.max(...tripsData.map((t) => t.slNo));
-        setNextSlNo(maxSl + 1);
-      } else {
-        setNextSlNo(1);
-      }
     } catch (err) {
       console.error("Error loading data:", err);
     } finally {
@@ -109,7 +102,11 @@ function MainLayout() {
     },
     "daily-entry": {
       title: "Daily entry log",
-      subtitle: "Auto-generated Sl.No & trip entries auto-saved",
+      subtitle: "Manually entered Sl.No & trip records log",
+    },
+    "pending-booking": {
+      title: "Pending booking",
+      subtitle: "Trips missing company booking amount",
     },
     "pending-commission": {
       title: "Pending commission",
@@ -197,10 +194,20 @@ function MainLayout() {
               element={
                 <DailyEntryPage
                   trips={trips}
-                  nextSlNo={nextSlNo}
                   onCreateTrip={handleCreateTrip}
                   onUpdateTrip={handleUpdateTrip}
                   onDeleteTrip={handleDeleteTrip}
+                  globalSearch={globalSearch}
+                  setGlobalSearch={setGlobalSearch}
+                />
+              }
+            />
+            <Route
+              path="/pending-booking"
+              element={
+                <PendingBookingPage
+                  trips={trips}
+                  onUpdateTrip={handleUpdateTrip}
                   globalSearch={globalSearch}
                   setGlobalSearch={setGlobalSearch}
                 />

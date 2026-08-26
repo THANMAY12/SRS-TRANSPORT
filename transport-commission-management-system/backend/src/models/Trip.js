@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const tripSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
-  sl_no: { type: Number, required: true },
+  sl_no: { type: Number, required: true, unique: true },
   date: { type: String, required: true },
   vehicle_number: { type: String, required: true },
   driver_phone: { type: String, default: "" },
@@ -12,6 +12,7 @@ const tripSchema = new mongoose.Schema({
   transport: { type: String, required: true },
   booking: { type: Number, default: 0 },
   commission: { type: Number, default: null },
+  commission_received_type: { type: String, default: "" },
   advance_received_amount: { type: Number, default: 0 },
   advance_received_type: { type: String, default: "" },
   advance_paid_amount: { type: Number, default: 0 },

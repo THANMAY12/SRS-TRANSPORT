@@ -1,10 +1,29 @@
 import React from "react";
-import { X, AlertCircle, Clock, Truck, Building2, Scale, Landmark, ArrowRight } from "lucide-react";
+import {
+  X,
+  AlertCircle,
+  ReceiptText,
+  Clock,
+  Truck,
+  Building2,
+  Scale,
+  Landmark,
+  ArrowRight,
+} from "lucide-react";
 
 export const NotificationDrawer = ({ isOpen, onClose, stats, onNavigatePage }) => {
   if (!isOpen) return null;
 
   const queues = [
+    {
+      id: "pending-booking",
+      title: "Pending booking entries",
+      count: stats?.pendingBookingCount || 0,
+      description: "Trips requiring company booking amount",
+      icon: ReceiptText,
+      border: "border-amber-200 bg-amber-50/50 hover:bg-amber-50 text-amber-900",
+      page: "pending-booking",
+    },
     {
       id: "pending-commission",
       title: "Pending commission entries",

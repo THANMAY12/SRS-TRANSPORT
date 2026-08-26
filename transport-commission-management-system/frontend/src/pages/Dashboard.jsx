@@ -3,6 +3,7 @@ import {
   Truck,
   IndianRupee,
   Coins,
+  ReceiptText,
   Clock,
   Building2,
   Scale,
@@ -20,6 +21,8 @@ import { TripDetailModal } from "../components/modals/TripDetailModal";
 import {
   formatCurrency,
   formatDate,
+  hasBooking,
+  isPendingBooking,
   isPendingCommission,
   isPendingAdvanceVehicle,
   isPendingAdvanceCompany,
@@ -75,6 +78,15 @@ export const Dashboard = ({
 
   // Group 2: Pending Work (Subtle warning treatment)
   const pendingWork = [
+    {
+      id: "pending-booking",
+      title: "Pending booking",
+      value: stats?.pendingBookingCount || 0,
+      subtext: "Trips missing booking amount",
+      icon: ReceiptText,
+      variant: "warning",
+      onClick: () => onNavigatePage("pending-booking"),
+    },
     {
       id: "pending-commission",
       title: "Pending commission",
@@ -275,6 +287,7 @@ export const Dashboard = ({
               : "No trip entries found matching your search term."
           }
           renderRow={(trip) => {
+            const isBk = isPendingBooking(trip);
             const isComm = isPendingCommission(trip);
             const isAdvPaid = isPendingAdvanceVehicle(trip);
             const isAdvRec = isPendingAdvanceCompany(trip);
@@ -297,7 +310,11 @@ export const Dashboard = ({
                   {formatCurrency(trip.freight)}
                 </td>
                 <td className="py-2.5 px-3.5 font-mono text-slate-600">
-                  {formatCurrency(trip.booking)}
+                  {hasBooking(trip) ? (
+                    formatCurrency(trip.booking)
+                  ) : (
+                    <span className="text-amber-600 font-normal">Pending</span>
+                  )}
                 </td>
                 <td className="py-2.5 px-3.5 font-mono font-semibold text-slate-900">
                   {trip.commission !== null ? formatCurrency(trip.commission) : "-"}
@@ -308,6 +325,8 @@ export const Dashboard = ({
                 <td className="py-2.5 px-3.5">
                   {isComp ? (
                     <StatusBadge type="completed" text="Completed" size="sm" />
+                  ) : isBk ? (
+                    <StatusBadge type="pending-advance-company" text="Pending booking" size="sm" />
                   ) : isComm ? (
                     <StatusBadge type="pending-commission" text="Pending comm" size="sm" />
                   ) : isAdvPaid ? (
@@ -323,8 +342,8 @@ export const Dashboard = ({
                 <td className="py-2.5 px-3.5 text-center">
                   <button
                     onClick={() => setSelectedTripModal(trip)}
-                    className="p-1 rounded text-slate-500 hover:text-blue-700 hover:bg-slate-100 transition-colors"
-                    title="View details"
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                    title="View Trip Detail"
                   >
                     <Eye className="h-4 w-4" />
                   </button>

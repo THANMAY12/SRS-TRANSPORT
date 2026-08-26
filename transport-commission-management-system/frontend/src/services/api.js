@@ -47,7 +47,18 @@ async function request(endpoint, options = {}) {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || "An error occurred during request");
+    const errorMsg =
+      typeof data.message === "string" && data.message
+        ? data.message
+        : typeof data.error === "string"
+          ? data.error
+          : typeof data.error?.message === "string"
+            ? data.error.message
+            : "An error occurred during request";
+    const err = new Error(errorMsg);
+    err.status = response.status;
+    err.response = { status: response.status, data };
+    throw err;
   }
 
   return data;

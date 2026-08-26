@@ -69,17 +69,59 @@ export function isBalanceCompanyActive(t) {
 
 export function isCompletedTrip(t) {
   const commDone = !isPendingCommission(t);
+  const bookingDone = hasBooking(t);
   const advPaidDone = !isPendingAdvanceVehicle(t);
   const advRecDone = !isPendingAdvanceCompany(t);
   const vehBalDone = !isBalanceVehicleActive(t);
   const compBalDone = !isBalanceCompanyActive(t);
 
-  return commDone && advPaidDone && advRecDone && vehBalDone && compBalDone;
+  return commDone && bookingDone && advPaidDone && advRecDone && vehBalDone && compBalDone;
+}
+
+export function hasBooking(t) {
+  if (!t) return false;
+  const b = t.booking;
+  if (b === null || b === undefined || b === "") return false;
+  const num = Number(b);
+  return !isNaN(num);
+}
+
+export function isPendingBooking(t) {
+  return !hasBooking(t);
+}
+
+export function isBothToPay(t) {
+  if (!t) return false;
+  const advRecType = (t.advanceReceivedType || t.advance_received_type || "").trim();
+  const advPaidType = (t.advancePaidType || t.advance_paid_type || "").trim();
+  return advRecType === "To Pay" && advPaidType === "To Pay";
+}
+
+export function getTripDifferenceAmount(t) {
+  if (!t || !hasBooking(t)) return 0;
+  const booking = Number(t.booking) || 0;
+  const freight = Number(t.freight) || 0;
+  return isBothToPay(t) ? booking - freight : 0;
+}
+
+export function getTripAccountRefund(t) {
+  if (!t || !hasBooking(t)) return 0;
+  const booking = Number(t.booking) || 0;
+  const freight = Number(t.freight) || 0;
+  return isBothToPay(t) ? 0 : booking - freight;
+}
+
+export function getTripGrossIncome(t) {
+  if (!t) return 0;
+  const commission = Number(t.commission) || 0;
+  if (!hasBooking(t)) return commission;
+  return getTripDifferenceAmount(t) + commission;
 }
 
 export function getTripPaymentStatus(t) {
   if (!t) return "N/A";
   if (isCompletedTrip(t)) return "Completed";
+  if (!hasBooking(t)) return "Booking Pending";
   if (isPendingCommission(t)) return "Pending Comm";
   if (isPendingAdvanceVehicle(t)) return "Pending Adv Veh";
   if (isPendingAdvanceCompany(t)) return "Pending Adv Comp";

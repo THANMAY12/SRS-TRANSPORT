@@ -123,6 +123,15 @@ export const createTrip = async (req, res, next) => {
     const createdTrip = await tripService.createTrip(body, req.user);
     res.status(201).json(createdTrip);
   } catch (error) {
+    if (error.message && error.message.includes("already exists")) {
+      res.status(409);
+    } else if (
+      error.message &&
+      (error.message.startsWith("Commission Received Type") ||
+        error.message.startsWith("Sl.No is required"))
+    ) {
+      res.status(400);
+    }
     next(error);
   }
 };
@@ -134,6 +143,15 @@ export const updateTrip = async (req, res, next) => {
   } catch (error) {
     if (error.message === "Trip not found") res.status(404);
     if (error.message === "Workers cannot edit completed trips") res.status(403);
+    if (error.message && error.message.includes("already exists")) {
+      res.status(409);
+    } else if (
+      error.message &&
+      (error.message.startsWith("Commission Received Type") ||
+        error.message.startsWith("Sl.No is required"))
+    ) {
+      res.status(400);
+    }
     next(error);
   }
 };

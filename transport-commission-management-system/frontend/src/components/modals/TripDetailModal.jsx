@@ -10,6 +10,10 @@ import {
   isPendingAdvanceCompany,
   getVehicleBalanceAmount,
   getCompanyBalanceAmount,
+  getTripDifferenceAmount,
+  getTripAccountRefund,
+  getTripGrossIncome,
+  hasBooking,
 } from "../../lib/utils";
 
 export const TripDetailModal = ({ trip, onClose }) => {
@@ -21,6 +25,10 @@ export const TripDetailModal = ({ trip, onClose }) => {
   const isCommPending = isPendingCommission(trip);
   const isAdvVehPending = isPendingAdvanceVehicle(trip);
   const isAdvCompPending = isPendingAdvanceCompany(trip);
+
+  const diffAmount = getTripDifferenceAmount(trip);
+  const accountRefund = getTripAccountRefund(trip);
+  const grossIncome = getTripGrossIncome(trip);
 
   return (
     <Modal
@@ -71,16 +79,18 @@ export const TripDetailModal = ({ trip, onClose }) => {
         {/* Section 2: Financial Details */}
         <div>
           <h4 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            Financial Details & Commission
+            Financial Details & Income Breakdown
           </h4>
-          <div className="grid grid-cols-3 gap-3 p-3.5 rounded-lg bg-slate-50 border border-slate-200 font-mono">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-lg bg-slate-50 border border-slate-200 font-mono">
             <div>
               <span className="text-slate-500 block text-[10px] font-sans">Freight (Vehicle)</span>
               <strong className="text-slate-900">{formatCurrency(trip.freight)}</strong>
             </div>
             <div>
               <span className="text-slate-500 block text-[10px] font-sans">Booking (Company)</span>
-              <strong className="text-slate-900">{formatCurrency(trip.booking)}</strong>
+              <strong className="text-slate-900">
+                {hasBooking(trip) ? formatCurrency(trip.booking) : "Blank (Pending)"}
+              </strong>
             </div>
             <div>
               <span className="text-slate-500 block text-[10px] font-sans">Commission (Agent)</span>
@@ -92,6 +102,18 @@ export const TripDetailModal = ({ trip, onClose }) => {
                   Comm Date: {formatDate(trip.commissionDueDate)}
                 </span>
               )}
+            </div>
+            <div>
+              <span className="text-slate-500 block text-[10px] font-sans">Difference Amount</span>
+              <strong className="text-blue-700">{formatCurrency(diffAmount)}</strong>
+            </div>
+            <div>
+              <span className="text-slate-500 block text-[10px] font-sans">Account Refund</span>
+              <strong className="text-indigo-700">{formatCurrency(accountRefund)}</strong>
+            </div>
+            <div>
+              <span className="text-slate-500 block text-[10px] font-sans">Total Gross Income</span>
+              <strong className="text-emerald-700">{formatCurrency(grossIncome)}</strong>
             </div>
           </div>
         </div>

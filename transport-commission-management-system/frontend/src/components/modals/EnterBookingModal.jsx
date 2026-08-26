@@ -1,16 +1,10 @@
 import React, { useState } from "react";
-import { Coins, Check } from "lucide-react";
+import { ReceiptText, Check } from "lucide-react";
 import { Modal } from "../ui/Modal";
 import { formatCurrency } from "../../lib/utils";
 
-export const EnterCommissionModal = ({ trip, onClose, onSave }) => {
-  const [commission, setCommission] = useState("");
-  const [commissionReceivedType, setCommissionReceivedType] = useState(
-    trip?.commissionReceivedType || ""
-  );
-  const [commissionDueDate, setCommissionDueDate] = useState(
-    () => new Date().toISOString().split("T")[0]
-  );
+export const EnterBookingModal = ({ trip, onClose, onSave }) => {
+  const [booking, setBooking] = useState("");
   const [remarks, setRemarks] = useState(trip?.remarks || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -20,25 +14,18 @@ export const EnterCommissionModal = ({ trip, onClose, onSave }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    if (commission === "" || isNaN(Number(commission))) {
-      setError("Please enter a valid numeric commission amount.");
-      return;
-    }
-    if (!commissionReceivedType || !commissionReceivedType.trim()) {
-      setError("Commission Received Type is required.");
-      return;
-    }
-    if (!commissionDueDate || !commissionDueDate.trim()) {
-      setError("Commission date is required.");
+    const bookingNum = Number(booking);
+    if (booking === "" || isNaN(bookingNum) || bookingNum <= 0) {
+      setError("Please enter a valid numeric booking amount greater than 0.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await onSave(trip.id, Number(commission), commissionReceivedType, commissionDueDate, remarks);
+      await onSave(trip.id, bookingNum, remarks);
       onClose();
     } catch (err) {
-      setError(err.message || "Failed to update commission amount.");
+      setError(err.message || "Failed to update booking amount.");
     } finally {
       setIsSubmitting(false);
     }
@@ -48,8 +35,8 @@ export const EnterCommissionModal = ({ trip, onClose, onSave }) => {
     <Modal
       isOpen={!!trip}
       onClose={onClose}
-      title={`Enter commission — Trip #${trip.slNo}`}
-      subtitle="Assign agent commission to update trip record status."
+      title={`Enter booking amount — Trip #${trip.slNo}`}
+      subtitle="Assign company booking amount to calculate financial margins and update trip status."
       maxWidth="max-w-md"
     >
       <div className="space-y-4 text-xs">
@@ -86,22 +73,22 @@ export const EnterCommissionModal = ({ trip, onClose, onSave }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
-              htmlFor="modal_commission_input"
+              htmlFor="modal_booking_input"
               className="block text-[11px] font-semibold text-slate-700 uppercase mb-1"
             >
-              Commission Amount (₹) *
+              Booking Amount (₹ Company) *
             </label>
             <div className="relative">
-              <Coins className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <ReceiptText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
-                id="modal_commission_input"
+                id="modal_booking_input"
                 type="number"
-                min="0"
+                min="1"
                 required
                 autoFocus
-                placeholder="e.g. 2500"
-                value={commission}
-                onChange={(e) => setCommission(e.target.value)}
+                placeholder="e.g. 50000"
+                value={booking}
+                onChange={(e) => setBooking(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
               />
             </div>
@@ -109,50 +96,13 @@ export const EnterCommissionModal = ({ trip, onClose, onSave }) => {
 
           <div>
             <label
-              htmlFor="modal_commission_received_type_input"
-              className="block text-[11px] font-semibold text-slate-700 uppercase mb-1"
-            >
-              Commission Received Type *
-            </label>
-            <select
-              id="modal_commission_received_type_input"
-              required
-              value={commissionReceivedType}
-              onChange={(e) => setCommissionReceivedType(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
-            >
-              <option value="">-- Select type --</option>
-              <option value="Cash">Cash</option>
-              <option value="PhonePe">PhonePe</option>
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="modal_commission_date_input"
-              className="block text-[11px] font-semibold text-slate-700 uppercase mb-1"
-            >
-              Commission Date *
-            </label>
-            <input
-              id="modal_commission_date_input"
-              type="date"
-              required
-              value={commissionDueDate}
-              onChange={(e) => setCommissionDueDate(e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-medium text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="modal_commission_remarks_input"
+              htmlFor="modal_booking_remarks_input"
               className="block text-[11px] font-semibold text-slate-700 uppercase mb-1"
             >
               Remarks (Optional)
             </label>
             <input
-              id="modal_commission_remarks_input"
+              id="modal_booking_remarks_input"
               type="text"
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
@@ -175,7 +125,7 @@ export const EnterCommissionModal = ({ trip, onClose, onSave }) => {
               className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs flex items-center gap-1.5 transition-colors"
             >
               <Check className="h-4 w-4" />
-              <span>{isSubmitting ? "Saving..." : "Save Commission"}</span>
+              <span>{isSubmitting ? "Saving..." : "Save Booking"}</span>
             </button>
           </div>
         </form>

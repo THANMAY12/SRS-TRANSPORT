@@ -51,6 +51,46 @@ export function isCompletedTrip(t) {
   return commDone && advPaidDone && advRecDone && vehBalDone && compBalDone;
 }
 
+export function hasBooking(t) {
+  if (!t) return false;
+  const b = t.booking;
+  if (b === null || b === undefined || b === "") return false;
+  const num = Number(b);
+  return !isNaN(num);
+}
+
+export function isPendingBooking(t) {
+  return !hasBooking(t);
+}
+
+export function isBothToPay(t) {
+  if (!t) return false;
+  const advRecType = (t.advanceReceivedType || t.advance_received_type || "").trim();
+  const advPaidType = (t.advancePaidType || t.advance_paid_type || "").trim();
+  return advRecType === "To Pay" && advPaidType === "To Pay";
+}
+
+export function getTripDifferenceAmount(t) {
+  if (!t || !hasBooking(t)) return 0;
+  const booking = Number(t.booking) || 0;
+  const freight = Number(t.freight) || 0;
+  return isBothToPay(t) ? booking - freight : 0;
+}
+
+export function getTripAccountRefund(t) {
+  if (!t || !hasBooking(t)) return 0;
+  const booking = Number(t.booking) || 0;
+  const freight = Number(t.freight) || 0;
+  return isBothToPay(t) ? 0 : booking - freight;
+}
+
+export function getTripGrossIncome(t) {
+  if (!t) return 0;
+  const commission = Number(t.commission) || 0;
+  if (!hasBooking(t)) return commission;
+  return getTripDifferenceAmount(t) + commission;
+}
+
 export function mapTripDoc(doc) {
   if (!doc) return null;
   const obj = doc.toObject ? doc.toObject() : doc;
@@ -66,6 +106,7 @@ export function mapTripDoc(doc) {
     transport: obj.transport,
     booking: obj.booking,
     commission: obj.commission,
+    commissionReceivedType: obj.commission_received_type || "",
     advanceReceivedAmount: obj.advance_received_amount,
     advanceReceivedType: obj.advance_received_type,
     advancePaidAmount: obj.advance_paid_amount,
@@ -95,24 +136,54 @@ export async function getTripById(id) {
   return mapTripDoc(trip);
 }
 
-export async function getNextSlNo() {
-  const latestTrip = await Trip.findOne().sort({ sl_no: -1 }).lean();
-  return latestTrip ? latestTrip.sl_no + 1 : 1;
-}
-
 export async function createTrip(body, user) {
-  const nextSlNo = await getNextSlNo();
+  const rawSlNo = body.slNo !== undefined ? body.slNo : body.sl_no;
+  const slNoNum = Number(rawSlNo);
+  if (
+    rawSlNo === undefined ||
+    rawSlNo === null ||
+    rawSlNo === "" ||
+    isNaN(slNoNum) ||
+    !Number.isInteger(slNoNum) ||
+    slNoNum <= 0
+  ) {
+    throw new Error("Sl.No is required and must be a positive integer greater than 0.");
+  }
+
+  const existingSlNoTrip = await Trip.findOne({ sl_no: slNoNum }).lean();
+  if (existingSlNoTrip) {
+    throw new Error(`Sl.No ${slNoNum} already exists. Please enter a different Sl.No.`);
+  }
+
   const tripId = "trip_" + Date.now();
   const now = new Date().toISOString();
   const dateStr = body.date;
 
   const driverPhone = body.driverPhone ? body.driverPhone.trim() : "";
   const freight = Number(body.freight) || 0;
-  const booking = Number(body.booking) || 0;
+  const rawBooking = body.booking;
+  const booking =
+    rawBooking !== null &&
+    rawBooking !== undefined &&
+    rawBooking !== "" &&
+    !isNaN(Number(rawBooking))
+      ? Number(rawBooking)
+      : null;
   const commission =
     body.commission !== null && body.commission !== undefined && body.commission !== ""
       ? Number(body.commission)
       : null;
+  const rawCommType = body.commissionReceivedType || "";
+  const commissionReceivedType = commission !== null && commission > 0 ? rawCommType : "";
+
+  if (
+    commission !== null &&
+    commission > 0 &&
+    (!commissionReceivedType || !commissionReceivedType.trim())
+  ) {
+    throw new Error("Commission Received Type is required when Commission is entered.");
+  }
+
   const advanceReceivedAmount = Number(body.advanceReceivedAmount) || 0;
   const advanceReceivedType = body.advanceReceivedType || "";
   const advancePaidAmount = Number(body.advancePaidAmount) || 0;
@@ -121,7 +192,7 @@ export async function createTrip(body, user) {
 
   await Trip.create({
     id: tripId,
-    sl_no: nextSlNo,
+    sl_no: slNoNum,
     date: dateStr,
     vehicle_number: body.vehicleNumber.trim().toUpperCase(),
     driver_phone: driverPhone,
@@ -131,6 +202,7 @@ export async function createTrip(body, user) {
     transport: body.transport.trim(),
     booking,
     commission,
+    commission_received_type: commissionReceivedType,
     advance_received_amount: advanceReceivedAmount,
     advance_received_type: advanceReceivedType,
     advance_paid_amount: advancePaidAmount,
@@ -155,7 +227,7 @@ export async function createTrip(body, user) {
     "CREATE_TRIP",
     tripId,
     "",
-    `Created Trip Sl.No ${nextSlNo} (${body.vehicleNumber.toUpperCase()})`
+    `Created Trip Sl.No ${slNoNum} (${body.vehicleNumber.toUpperCase()})`
   );
 
   return createdTrip;
@@ -173,6 +245,28 @@ export async function updateTrip(id, body, user) {
 
   const oldValStr = JSON.stringify(existingTrip);
 
+  const rawSlNo = body.slNo !== undefined ? body.slNo : body.sl_no;
+  let updatedSlNo = existingTrip.slNo;
+  if (rawSlNo !== undefined) {
+    const slNoNum = Number(rawSlNo);
+    if (
+      rawSlNo === null ||
+      rawSlNo === "" ||
+      isNaN(slNoNum) ||
+      !Number.isInteger(slNoNum) ||
+      slNoNum <= 0
+    ) {
+      throw new Error("Sl.No is required and must be a positive integer greater than 0.");
+    }
+    if (slNoNum !== existingTrip.slNo) {
+      const existingSlNoTrip = await Trip.findOne({ sl_no: slNoNum, id: { $ne: id } }).lean();
+      if (existingSlNoTrip) {
+        throw new Error(`Sl.No ${slNoNum} already exists. Please enter a different Sl.No.`);
+      }
+    }
+    updatedSlNo = slNoNum;
+  }
+
   const updatedDate = body.date || existingTrip.date;
   const updatedVehicleNumber = (body.vehicleNumber || existingTrip.vehicleNumber).toUpperCase();
   const updatedDriverPhone =
@@ -182,7 +276,13 @@ export async function updateTrip(id, body, user) {
   const updatedTo = body.toLocation !== undefined ? body.toLocation : existingTrip.toLocation;
   const updatedFreight = body.freight !== undefined ? Number(body.freight) : existingTrip.freight;
   const updatedTransport = body.transport !== undefined ? body.transport : existingTrip.transport;
-  const updatedBooking = body.booking !== undefined ? Number(body.booking) : existingTrip.booking;
+  const rawBooking = body.booking;
+  const updatedBooking =
+    rawBooking !== undefined
+      ? rawBooking === null || rawBooking === "" || isNaN(Number(rawBooking))
+        ? null
+        : Number(rawBooking)
+      : existingTrip.booking;
 
   const updatedCommission =
     body.commission !== undefined
@@ -190,6 +290,22 @@ export async function updateTrip(id, body, user) {
         ? null
         : Number(body.commission)
       : existingTrip.commission;
+
+  const rawCommType =
+    body.commissionReceivedType !== undefined
+      ? body.commissionReceivedType
+      : existingTrip.commissionReceivedType || "";
+
+  const updatedCommissionReceivedType =
+    updatedCommission !== null && updatedCommission > 0 ? rawCommType : "";
+
+  if (
+    updatedCommission !== null &&
+    updatedCommission > 0 &&
+    (!updatedCommissionReceivedType || !updatedCommissionReceivedType.trim())
+  ) {
+    throw new Error("Commission Received Type is required when Commission is entered.");
+  }
 
   const updatedAdvRecAmt =
     body.advanceReceivedAmount !== undefined
@@ -225,6 +341,7 @@ export async function updateTrip(id, body, user) {
   await Trip.updateOne(
     { id },
     {
+      sl_no: updatedSlNo,
       date: updatedDate,
       vehicle_number: updatedVehicleNumber,
       driver_phone: updatedDriverPhone,
@@ -234,6 +351,7 @@ export async function updateTrip(id, body, user) {
       transport: updatedTransport,
       booking: updatedBooking,
       commission: updatedCommission,
+      commission_received_type: updatedCommissionReceivedType,
       advance_received_amount: updatedAdvRecAmt,
       advance_received_type: updatedAdvRecType,
       advance_paid_amount: updatedAdvPaidAmt,

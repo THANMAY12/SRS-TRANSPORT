@@ -1,16 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Plus, Edit2, Trash2, Save, X } from "lucide-react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { DataTable } from "../components/ui/DataTable";
 import { Toast } from "../components/ui/Toast";
 import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { StatusBadge } from "../components/ui/StatusBadge";
-import { formatCurrency, formatDate } from "../lib/utils";
+import { formatCurrency, formatDate, hasBooking } from "../lib/utils";
 import { useAuth } from "../context/AuthContext";
 
 export const DailyEntryPage = ({
   trips,
-  nextSlNo,
   onCreateTrip,
   onUpdateTrip,
   onDeleteTrip,
@@ -26,9 +25,18 @@ export const DailyEntryPage = ({
   const [deleteConfirmTrip, setDeleteConfirmTrip] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const toastRef = useRef(null);
+
+  useEffect(() => {
+    if (toast && toast.type === "error") {
+      toastRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [toast]);
+
   // Form State
   const todayStr = new Date().toISOString().split("T")[0];
   const [formData, setFormData] = useState({
+    slNo: "",
     date: todayStr,
     vehicleNumber: "",
     driverPhone: "",
@@ -66,6 +74,7 @@ export const DailyEntryPage = ({
 
   const resetForm = () => {
     setFormData({
+      slNo: "",
       date: todayStr,
       vehicleNumber: "",
       driverPhone: "",
@@ -89,6 +98,7 @@ export const DailyEntryPage = ({
   const handleEditClick = (trip) => {
     setEditingTripId(trip.id);
     setFormData({
+      slNo: trip.slNo ? String(trip.slNo) : "",
       date: trip.date,
       vehicleNumber: trip.vehicleNumber,
       driverPhone: trip.driverPhone || "",
@@ -112,6 +122,15 @@ export const DailyEntryPage = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const slNoNum = Number(formData.slNo);
+    if (!formData.slNo || isNaN(slNoNum) || !Number.isInteger(slNoNum) || slNoNum <= 0) {
+      setToast({
+        type: "error",
+        message: "Sl.No is required and must be a positive integer greater than 0.",
+      });
+      return;
+    }
+
     if (
       !formData.vehicleNumber ||
       !formData.fromLocation ||
@@ -125,9 +144,21 @@ export const DailyEntryPage = ({
       return;
     }
 
+    if (
+      isCommissionValid &&
+      (!formData.commissionReceivedType || !formData.commissionReceivedType.trim())
+    ) {
+      setToast({
+        type: "error",
+        message: "Commission Received Type is required when Commission is entered.",
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       const payload = {
+        slNo: slNoNum,
         date: formData.date,
         vehicleNumber: formData.vehicleNumber.trim().toUpperCase(),
         driverPhone: formData.driverPhone.trim(),
@@ -135,8 +166,15 @@ export const DailyEntryPage = ({
         toLocation: formData.toLocation.trim(),
         freight: Number(formData.freight) || 0,
         transport: formData.transport.trim(),
-        booking: Number(formData.booking) || 0,
+        booking:
+          formData.booking !== "" &&
+          formData.booking !== null &&
+          formData.booking !== undefined &&
+          !isNaN(Number(formData.booking))
+            ? Number(formData.booking)
+            : null,
         commission: formData.commission !== "" ? Number(formData.commission) : null,
+        commissionReceivedType: formData.commissionReceivedType,
         advanceReceivedAmount: Number(formData.advanceReceivedAmount) || 0,
         advanceReceivedType: formData.advanceReceivedType,
         advancePaidAmount: Number(formData.advancePaidAmount) || 0,
@@ -154,15 +192,21 @@ export const DailyEntryPage = ({
         await onCreateTrip(payload);
         setToast({
           type: "success",
-          message: `New trip record saved automatically! Sl.No #${nextSlNo}`,
+          message: `New trip record saved! Sl.No #${payload.slNo}`,
         });
       }
 
       resetForm();
     } catch (err) {
+      const errorMsg =
+        typeof err?.message === "string"
+          ? err.message
+          : err?.response?.data?.message ||
+            err?.response?.data?.error ||
+            "Error saving trip record.";
       setToast({
         type: "error",
-        message: err.message || "Error saving trip record.",
+        message: errorMsg,
       });
     } finally {
       setIsSaving(false);
@@ -228,7 +272,7 @@ export const DailyEntryPage = ({
       <PageHeader
         badgeText="Daily entry hub"
         title="Daily entry log"
-        subtitle="High-frequency operational trip record entry screen with auto Sl.No generation."
+        subtitle="High-frequency operational trip record entry screen with manual Sl.No entry."
         searchPlaceholder="Search Sl.No, Vehicle, Transport..."
         searchValue={globalSearch}
         onSearchChange={setGlobalSearch}
@@ -246,13 +290,17 @@ export const DailyEntryPage = ({
             className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs flex items-center gap-1.5 transition-colors shrink-0"
           >
             {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            <span>{showForm ? "Cancel Entry" : `+ New Entry (Auto Sl.No #${nextSlNo})`}</span>
+            <span>{showForm ? "Cancel Entry" : "+ Add New Trip Entry"}</span>
           </button>
         }
       />
 
       {/* Toast Notification */}
-      {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
+      {toast && (
+        <div ref={toastRef}>
+          <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />
+        </div>
+      )}
 
       {/* Entry Form */}
       {showForm && (
@@ -260,14 +308,14 @@ export const DailyEntryPage = ({
           <div className="flex items-center justify-between pb-3 border-b border-slate-200">
             <div>
               <h3 className="text-sm font-bold text-slate-900">
-                {editingTripId ? `Edit trip entry` : `New daily trip entry (Sl.No #${nextSlNo})`}
+                {editingTripId ? `Edit trip entry` : `New daily trip entry`}
               </h3>
               <p className="text-xs text-slate-500">
                 Fill in route, freight, transport, and advance details below.
               </p>
             </div>
-            <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
-              Auto Sl.No active
+            <span className="text-[11px] font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">
+              Manual Sl.No
             </span>
           </div>
 
@@ -283,14 +331,17 @@ export const DailyEntryPage = ({
                     htmlFor="field_slNo"
                     className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
                   >
-                    1. Sl.No (Auto)
+                    1. Sl.No *
                   </label>
                   <input
                     id="field_slNo"
-                    type="text"
-                    readOnly
-                    value={`#${editingTripId ? trips.find((t) => t.id === editingTripId)?.slNo : nextSlNo}`}
-                    className="w-full px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-bold"
+                    type="number"
+                    min="1"
+                    required
+                    placeholder="e.g. 10"
+                    value={formData.slNo}
+                    onChange={(e) => setFormData({ ...formData, slNo: e.target.value })}
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
                   />
                 </div>
 
@@ -645,7 +696,13 @@ export const DailyEntryPage = ({
               {formatCurrency(t.freight)}
             </td>
             <td className="py-2.5 px-3.5 truncate max-w-[120px]">{t.transport}</td>
-            <td className="py-2.5 px-3.5 font-mono text-slate-600">{formatCurrency(t.booking)}</td>
+            <td className="py-2.5 px-3.5 font-mono text-slate-600">
+              {hasBooking(t) ? (
+                formatCurrency(t.booking)
+              ) : (
+                <StatusBadge type="pending-advance-company" text="Blank" size="sm" />
+              )}
+            </td>
             <td className="py-2.5 px-3.5 font-mono font-semibold text-slate-900">
               {t.commission !== null ? (
                 formatCurrency(t.commission)

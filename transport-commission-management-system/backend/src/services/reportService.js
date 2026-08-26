@@ -1,5 +1,6 @@
 import {
   getAllTrips,
+  isPendingBooking,
   isPendingCommission,
   isPendingAdvanceVehicle,
   isPendingAdvanceCompany,
@@ -8,6 +9,10 @@ import {
   isCompletedTrip,
   getVehicleBalanceAmount,
   getCompanyBalanceAmount,
+  getTripDifferenceAmount,
+  getTripAccountRefund,
+  getTripGrossIncome,
+  hasBooking,
 } from "./tripService.js";
 
 export async function getDashboardStats() {
@@ -20,6 +25,7 @@ export async function getDashboardStats() {
   const todayFreightTotal = todayTrips.reduce((sum, t) => sum + t.freight, 0);
   const todayCommissionTotal = todayTrips.reduce((sum, t) => sum + (t.commission || 0), 0);
 
+  const pendingBookingCount = allTrips.filter(isPendingBooking).length;
   const pendingCommissionCount = allTrips.filter(isPendingCommission).length;
   const pendingVehicleAdvanceCount = allTrips.filter(isPendingAdvanceVehicle).length;
   const pendingCompanyAdvanceCount = allTrips.filter(isPendingAdvanceCompany).length;
@@ -33,6 +39,7 @@ export async function getDashboardStats() {
     todayVehiclesCount,
     todayFreightTotal,
     todayCommissionTotal,
+    pendingBookingCount,
     pendingCommissionCount,
     pendingVehicleAdvanceCount,
     pendingCompanyAdvanceCount,
@@ -78,16 +85,22 @@ export async function getReports(query) {
   }
 
   const totalFreight = trips.reduce((sum, t) => sum + (t.freight || 0), 0);
-  const totalBooking = trips.reduce((sum, t) => sum + (t.booking || 0), 0);
+  const totalBooking = trips.reduce(
+    (sum, t) => sum + (hasBooking(t) ? Number(t.booking) || 0 : 0),
+    0
+  );
   const totalCommission = trips.reduce((sum, t) => sum + (t.commission || 0), 0);
-  const totalDifferenceAmount = trips.reduce(
-    (sum, t) => sum + ((t.booking || 0) - (t.freight || 0)),
+  const cashCommission = trips.reduce(
+    (sum, t) => sum + (t.commissionReceivedType === "Cash" ? t.commission || 0 : 0),
     0
   );
-  const totalGrossIncome = trips.reduce(
-    (sum, t) => sum + ((t.booking || 0) - (t.freight || 0) + (t.commission || 0)),
+  const phonePeCommission = trips.reduce(
+    (sum, t) => sum + (t.commissionReceivedType === "PhonePe" ? t.commission || 0 : 0),
     0
   );
+  const totalDifferenceAmount = trips.reduce((sum, t) => sum + getTripDifferenceAmount(t), 0);
+  const totalAccountRefund = trips.reduce((sum, t) => sum + getTripAccountRefund(t), 0);
+  const totalGrossIncome = trips.reduce((sum, t) => sum + getTripGrossIncome(t), 0);
   const totalAdvReceived = trips.reduce((sum, t) => sum + (t.advanceReceivedAmount || 0), 0);
   const totalAdvPaid = trips.reduce((sum, t) => sum + (t.advancePaidAmount || 0), 0);
   const totalVehicleBalance = trips.reduce(
@@ -105,7 +118,10 @@ export async function getReports(query) {
       totalFreight,
       totalBooking,
       totalCommission,
+      cashCommission,
+      phonePeCommission,
       totalDifferenceAmount,
+      totalAccountRefund,
       totalGrossIncome,
       totalAdvReceived,
       totalAdvPaid,

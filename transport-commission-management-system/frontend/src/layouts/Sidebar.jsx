@@ -2,6 +2,7 @@ import React from "react";
 import {
   LayoutDashboard,
   FilePlus,
+  ReceiptText,
   Clock,
   Truck,
   Building2,
@@ -38,6 +39,13 @@ export const Sidebar = ({ activePage, setActivePage, stats, isOpen, setIsOpen })
     {
       title: "Pending work",
       items: [
+        {
+          id: "pending-booking",
+          label: "Pending booking",
+          icon: ReceiptText,
+          badge: stats?.pendingBookingCount || 0,
+          badgeColor: "bg-amber-50 text-amber-700 border border-amber-200",
+        },
         {
           id: "pending-commission",
           label: "Pending commission",

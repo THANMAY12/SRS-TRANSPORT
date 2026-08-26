@@ -1,20 +1,20 @@
 import React, { useState } from "react";
-import { Coins } from "lucide-react";
+import { ReceiptText } from "lucide-react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { DataTable } from "../components/ui/DataTable";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { Toast } from "../components/ui/Toast";
-import { EnterCommissionModal } from "../components/modals/EnterCommissionModal";
-import { formatCurrency, formatDate, calculateDaysPending } from "../lib/utils";
+import { EnterBookingModal } from "../components/modals/EnterBookingModal";
+import { formatCurrency, formatDate, calculateDaysPending, isPendingBooking } from "../lib/utils";
 
-export const PendingCommissionPage = ({ trips, onUpdateTrip, globalSearch, setGlobalSearch }) => {
+export const PendingBookingPage = ({ trips, onUpdateTrip, globalSearch, setGlobalSearch }) => {
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Filter pending commission trips (commission === null || commission === undefined)
+  // Filter pending booking trips (!hasBooking(t))
   const pendingTrips = trips.filter(
     (t) =>
-      (t.commission === null || t.commission === undefined) &&
+      isPendingBooking(t) &&
       (!globalSearch.trim() ||
         String(t.slNo).includes(globalSearch.trim()) ||
         t.vehicleNumber.toLowerCase().includes(globalSearch.toLowerCase().trim()) ||
@@ -23,28 +23,20 @@ export const PendingCommissionPage = ({ trips, onUpdateTrip, globalSearch, setGl
         t.toLocation.toLowerCase().includes(globalSearch.toLowerCase().trim()))
   );
 
-  const handleSaveCommission = async (
-    id,
-    commissionVal,
-    commissionReceivedTypeVal,
-    commissionDueDate,
-    remarksVal
-  ) => {
+  const handleSaveBooking = async (id, bookingVal, remarksVal) => {
     try {
       await onUpdateTrip(id, {
-        commission: commissionVal,
-        commissionReceivedType: commissionReceivedTypeVal,
-        commissionDueDate: commissionDueDate || new Date().toISOString().split("T")[0],
+        booking: bookingVal,
         remarks: remarksVal !== undefined ? remarksVal : selectedTrip?.remarks || "",
       });
       setToast({
         type: "success",
-        message: `Commission assigned successfully for Trip #${selectedTrip?.slNo}.`,
+        message: `Booking amount assigned successfully for Trip #${selectedTrip?.slNo}.`,
       });
     } catch (err) {
       setToast({
         type: "error",
-        message: err.message || "Failed to update commission.",
+        message: err.message || "Failed to update booking amount.",
       });
       throw err;
     }
@@ -58,8 +50,7 @@ export const PendingCommissionPage = ({ trips, onUpdateTrip, globalSearch, setGl
     { title: "To" },
     { title: "Freight" },
     { title: "Transport" },
-    { title: "Booking" },
-    { title: "Commission Due Date" },
+    { title: "Commission" },
     { title: "Days Pending" },
     { title: "Action", align: "center" },
   ];
@@ -69,12 +60,12 @@ export const PendingCommissionPage = ({ trips, onUpdateTrip, globalSearch, setGl
       {/* Page Header */}
       <PageHeader
         badgeText="Pending work"
-        title={`Pending commission (${pendingTrips.length})`}
-        subtitle="Trips with unassigned agent commission. Entering a commission amount clears the record from this queue."
-        searchPlaceholder="Search pending commission..."
+        title={`Pending booking (${pendingTrips.length})`}
+        subtitle="Trips with unassigned company booking amount. Entering booking updates financial reports and margin calculations."
+        searchPlaceholder="Search pending booking..."
         searchValue={globalSearch}
         onSearchChange={setGlobalSearch}
-        printId="pending-commission-print-btn"
+        printId="pending-booking-print-btn"
       />
 
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
@@ -84,9 +75,9 @@ export const PendingCommissionPage = ({ trips, onUpdateTrip, globalSearch, setGl
         columns={columns}
         data={pendingTrips}
         headerBg="bg-amber-50/50"
-        emptyMessage="No pending commissions. All commission entries are currently up to date."
+        emptyMessage="No pending bookings. All trip booking entries are currently up to date."
         renderRow={(trip) => {
-          const daysPending = calculateDaysPending(trip.commissionDueDate || trip.date);
+          const daysPending = calculateDaysPending(trip.date);
           return (
             <tr
               key={trip.id}
@@ -101,15 +92,12 @@ export const PendingCommissionPage = ({ trips, onUpdateTrip, globalSearch, setGl
                 {formatCurrency(trip.freight)}
               </td>
               <td className="py-2.5 px-3.5 text-slate-700">{trip.transport}</td>
-              <td className="py-2.5 px-3.5 font-mono text-slate-600">
-                {formatCurrency(trip.booking)}
-              </td>
-              <td className="py-2.5 px-3.5 whitespace-nowrap">
-                {formatDate(trip.commissionDueDate || trip.date)}
+              <td className="py-2.5 px-3.5 font-mono text-emerald-700 font-semibold">
+                {trip.commission !== null ? formatCurrency(trip.commission) : "Blank (Pending)"}
               </td>
               <td className="py-2.5 px-3.5">
                 <StatusBadge
-                  type="pending-commission"
+                  type="pending-advance-company"
                   text={`${daysPending} Day${daysPending !== 1 ? "s" : ""} pending`}
                   size="sm"
                 />
@@ -119,8 +107,8 @@ export const PendingCommissionPage = ({ trips, onUpdateTrip, globalSearch, setGl
                   onClick={() => setSelectedTrip(trip)}
                   className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs flex items-center justify-center gap-1.5 mx-auto transition-colors"
                 >
-                  <Coins className="h-3.5 w-3.5" />
-                  <span>Enter Commission</span>
+                  <ReceiptText className="h-3.5 w-3.5" />
+                  <span>Enter Booking</span>
                 </button>
               </td>
             </tr>
@@ -128,11 +116,11 @@ export const PendingCommissionPage = ({ trips, onUpdateTrip, globalSearch, setGl
         }}
       />
 
-      {/* Commission Modal */}
-      <EnterCommissionModal
+      {/* Booking Modal */}
+      <EnterBookingModal
         trip={selectedTrip}
         onClose={() => setSelectedTrip(null)}
-        onSave={handleSaveCommission}
+        onSave={handleSaveBooking}
       />
     </div>
   );
