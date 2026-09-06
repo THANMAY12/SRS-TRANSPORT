@@ -12,10 +12,34 @@ export function formatDate(dateString) {
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return dateString;
   return date.toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
+}
+
+export function getLocalDateString(dateInput) {
+  if (!dateInput) return "";
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) {
+    return typeof dateInput === "string" ? dateInput.substring(0, 10) : "";
+  }
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}
+
+export function getTripReportDate(t) {
+  if (!t) return "";
+  const clearedAt = t.refundClearedAt || t.refund_cleared_at;
+  if (clearedAt) {
+    return getLocalDateString(clearedAt);
+  }
+  return t.date || "";
 }
 
 export function calculateDaysPending(dateString) {
@@ -90,6 +114,18 @@ export function isPendingBooking(t) {
   return !hasBooking(t);
 }
 
+export function hasRefund(t) {
+  if (!t) return false;
+  const r = t.refund;
+  if (r === null || r === undefined || r === "") return false;
+  const num = Number(r);
+  return !isNaN(num) && num >= 0;
+}
+
+export function isPendingRefund(t) {
+  return !hasRefund(t);
+}
+
 export function isBothToPay(t) {
   if (!t) return false;
   const advRecType = (t.advanceReceivedType || t.advance_received_type || "").trim();
@@ -98,10 +134,8 @@ export function isBothToPay(t) {
 }
 
 export function getTripDifferenceAmount(t) {
-  if (!t || !hasBooking(t)) return 0;
-  const booking = Number(t.booking) || 0;
-  const freight = Number(t.freight) || 0;
-  return isBothToPay(t) ? booking - freight : 0;
+  if (!t) return 0;
+  return hasRefund(t) ? Number(t.refund) : 0;
 }
 
 export function getTripAccountRefund(t) {
@@ -113,9 +147,9 @@ export function getTripAccountRefund(t) {
 
 export function getTripGrossIncome(t) {
   if (!t) return 0;
+  const refund = hasRefund(t) ? Number(t.refund) : 0;
   const commission = Number(t.commission) || 0;
-  if (!hasBooking(t)) return commission;
-  return getTripDifferenceAmount(t) + commission;
+  return refund + commission;
 }
 
 export function getTripPaymentStatus(t) {

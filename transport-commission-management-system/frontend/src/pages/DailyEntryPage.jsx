@@ -5,7 +5,7 @@ import { DataTable } from "../components/ui/DataTable";
 import { Toast } from "../components/ui/Toast";
 import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { StatusBadge } from "../components/ui/StatusBadge";
-import { formatCurrency, formatDate, hasBooking } from "../lib/utils";
+import { formatCurrency, formatDate, hasBooking, hasRefund } from "../lib/utils";
 import { useAuth } from "../context/AuthContext";
 
 export const DailyEntryPage = ({
@@ -45,6 +45,7 @@ export const DailyEntryPage = ({
     freight: "",
     transport: "",
     booking: "",
+    refund: "",
     commission: "",
     commissionReceivedType: "",
     advanceReceivedAmount: "",
@@ -83,6 +84,7 @@ export const DailyEntryPage = ({
       freight: "",
       transport: "",
       booking: "",
+      refund: "",
       commission: "",
       commissionReceivedType: "",
       advanceReceivedAmount: "",
@@ -107,6 +109,7 @@ export const DailyEntryPage = ({
       freight: trip.freight ? String(trip.freight) : "",
       transport: trip.transport,
       booking: trip.booking ? String(trip.booking) : "",
+      refund: trip.refund !== null && trip.refund !== undefined ? String(trip.refund) : "",
       commission:
         trip.commission !== null && trip.commission !== undefined ? String(trip.commission) : "",
       commissionReceivedType: trip.commissionReceivedType || "",
@@ -172,6 +175,14 @@ export const DailyEntryPage = ({
           formData.booking !== undefined &&
           !isNaN(Number(formData.booking))
             ? Number(formData.booking)
+            : null,
+        refund:
+          formData.refund !== "" &&
+          formData.refund !== null &&
+          formData.refund !== undefined &&
+          !isNaN(Number(formData.refund)) &&
+          Number(formData.refund) >= 0
+            ? Number(formData.refund)
             : null,
         commission: formData.commission !== "" ? Number(formData.commission) : null,
         commissionReceivedType: formData.commissionReceivedType,
@@ -257,6 +268,7 @@ export const DailyEntryPage = ({
     { title: "Freight" },
     { title: "Transport" },
     { title: "Booking" },
+    { title: "Refund" },
     { title: "Commission" },
     { title: "Adv Rec Amt" },
     { title: "Rec Type" },
@@ -456,9 +468,9 @@ export const DailyEntryPage = ({
             {/* Section 2: Financial Details */}
             <div className="space-y-2.5">
               <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                2. Freight & commission amounts
+                2. Freight, refund & commission amounts
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
                 <div>
                   <label
                     htmlFor="field_freight"
@@ -491,6 +503,24 @@ export const DailyEntryPage = ({
                     placeholder="e.g. 48000"
                     value={formData.booking}
                     onChange={(e) => setFormData({ ...formData, booking: e.target.value })}
+                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold font-mono focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="field_refund"
+                    className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                  >
+                    Refund Amount (₹) [Blank = Pending]
+                  </label>
+                  <input
+                    id="field_refund"
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 1000 or 0"
+                    value={formData.refund}
+                    onChange={(e) => setFormData({ ...formData, refund: e.target.value })}
                     className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold font-mono focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
                   />
                 </div>
@@ -701,6 +731,13 @@ export const DailyEntryPage = ({
                 formatCurrency(t.booking)
               ) : (
                 <StatusBadge type="pending-advance-company" text="Blank" size="sm" />
+              )}
+            </td>
+            <td className="py-2.5 px-3.5 font-mono font-semibold text-slate-900">
+              {hasRefund(t) ? (
+                formatCurrency(t.refund)
+              ) : (
+                <StatusBadge type="pending" text="Blank" size="sm" />
               )}
             </td>
             <td className="py-2.5 px-3.5 font-mono font-semibold text-slate-900">

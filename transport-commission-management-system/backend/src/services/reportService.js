@@ -4,20 +4,23 @@ import {
   isPendingCommission,
   isPendingAdvanceVehicle,
   isPendingAdvanceCompany,
+  isPendingRefund,
+  hasRefund,
   isBalanceVehicleActive,
   isBalanceCompanyActive,
   isCompletedTrip,
   getVehicleBalanceAmount,
   getCompanyBalanceAmount,
-  getTripDifferenceAmount,
   getTripAccountRefund,
   getTripGrossIncome,
+  getTripReportDate,
+  getLocalDateString,
   hasBooking,
 } from "./tripService.js";
 
 export async function getDashboardStats() {
   const allTrips = await getAllTrips();
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = getLocalDateString(new Date());
 
   const todayTrips = allTrips.filter((t) => t.date === todayStr);
 
@@ -29,6 +32,7 @@ export async function getDashboardStats() {
   const pendingCommissionCount = allTrips.filter(isPendingCommission).length;
   const pendingVehicleAdvanceCount = allTrips.filter(isPendingAdvanceVehicle).length;
   const pendingCompanyAdvanceCount = allTrips.filter(isPendingAdvanceCompany).length;
+  const pendingRefundsCount = allTrips.filter(isPendingRefund).length;
 
   const balanceVehicleCount = allTrips.filter(isBalanceVehicleActive).length;
   const balanceCompanyCount = allTrips.filter(isBalanceCompanyActive).length;
@@ -44,6 +48,7 @@ export async function getDashboardStats() {
     pendingCommissionCount,
     pendingVehicleAdvanceCount,
     pendingCompanyAdvanceCount,
+    pendingRefundsCount,
     balanceVehicleCount,
     balanceCompanyCount,
     completedTripsTodayCount,
@@ -55,23 +60,28 @@ export async function getReports(query) {
   const { period, startDate, endDate, vehicleNumber, transport } = query;
 
   let trips = await getAllTrips();
-  const today = new Date();
+
+  // Accounting Rule: Only trips with an entered Refund (including 0) appear in Financial Reports
+  trips = trips.filter(hasRefund);
+
+  const todayStr = getLocalDateString(new Date());
 
   if (period === "daily") {
-    const todayStr = today.toISOString().split("T")[0];
-    trips = trips.filter((t) => t.date === todayStr);
+    trips = trips.filter((t) => getTripReportDate(t) === todayStr);
   } else if (period === "weekly") {
-    const weekAgo = new Date(today.getTime() - 7 * 86400000).toISOString().split("T")[0];
-    trips = trips.filter((t) => t.date >= weekAgo);
+    const today = new Date();
+    const weekAgoStr = getLocalDateString(new Date(today.getTime() - 7 * 86400000));
+    trips = trips.filter((t) => getTripReportDate(t) >= weekAgoStr);
   } else if (period === "monthly") {
-    const monthAgo = new Date(today.getTime() - 30 * 86400000).toISOString().split("T")[0];
-    trips = trips.filter((t) => t.date >= monthAgo);
+    const today = new Date();
+    const monthAgoStr = getLocalDateString(new Date(today.getTime() - 30 * 86400000));
+    trips = trips.filter((t) => getTripReportDate(t) >= monthAgoStr);
   } else if (period === "custom" || startDate || endDate) {
     if (startDate) {
-      trips = trips.filter((t) => t.date >= String(startDate));
+      trips = trips.filter((t) => getTripReportDate(t) >= String(startDate));
     }
     if (endDate) {
-      trips = trips.filter((t) => t.date <= String(endDate));
+      trips = trips.filter((t) => getTripReportDate(t) <= String(endDate));
     }
   }
 
@@ -100,7 +110,8 @@ export async function getReports(query) {
     (sum, t) => sum + (t.commissionReceivedType === "PhonePe" ? t.commission || 0 : 0),
     0
   );
-  const totalDifferenceAmount = trips.reduce((sum, t) => sum + getTripDifferenceAmount(t), 0);
+  const totalRefund = trips.reduce((sum, t) => sum + (Number(t.refund) || 0), 0);
+  const totalDifferenceAmount = totalRefund; // Backwards compatible alias
   const totalAccountRefund = trips.reduce((sum, t) => sum + getTripAccountRefund(t), 0);
   const totalGrossIncome = trips.reduce((sum, t) => sum + getTripGrossIncome(t), 0);
   const totalAdvReceived = trips.reduce((sum, t) => sum + (t.advanceReceivedAmount || 0), 0);
@@ -122,6 +133,7 @@ export async function getReports(query) {
       totalCommission,
       cashCommission,
       phonePeCommission,
+      totalRefund,
       totalDifferenceAmount,
       totalAccountRefund,
       totalGrossIncome,
@@ -130,6 +142,11 @@ export async function getReports(query) {
       totalVehicleBalance,
       totalCompanyBalance,
     },
-    trips,
+    trips: trips.map((t) => ({
+      ...t,
+      reportDate: getTripReportDate(t),
+      grossIncome: getTripGrossIncome(t),
+      accountRefund: getTripAccountRefund(t),
+    })),
   };
 }

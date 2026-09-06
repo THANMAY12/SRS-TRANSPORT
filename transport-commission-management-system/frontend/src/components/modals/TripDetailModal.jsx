@@ -14,6 +14,7 @@ import {
   getTripAccountRefund,
   getTripGrossIncome,
   hasBooking,
+  hasRefund,
 } from "../../lib/utils";
 
 export const TripDetailModal = ({ trip, onClose }) => {
@@ -26,7 +27,6 @@ export const TripDetailModal = ({ trip, onClose }) => {
   const isAdvVehPending = isPendingAdvanceVehicle(trip);
   const isAdvCompPending = isPendingAdvanceCompany(trip);
 
-  const diffAmount = getTripDifferenceAmount(trip);
   const accountRefund = getTripAccountRefund(trip);
   const grossIncome = getTripGrossIncome(trip);
 
@@ -34,23 +34,23 @@ export const TripDetailModal = ({ trip, onClose }) => {
     <Modal
       isOpen={!!trip}
       onClose={onClose}
-      title={`Trip detail — #${trip.slNo}`}
-      subtitle={`Created on ${formatDate(trip.date)} • Vehicle: ${trip.vehicleNumber}`}
+      title={`Trip Entry Details — #${trip.slNo}`}
+      subtitle={`Date: ${formatDate(trip.date)} • Vehicle: ${trip.vehicleNumber}`}
       maxWidth="max-w-2xl"
     >
-      <div className="space-y-5 text-xs">
-        {/* Section 1: Trip & Route Information */}
+      <div className="space-y-4 text-xs">
+        {/* Section 1: Route & Identification */}
         <div>
           <h4 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            Trip & Route Information
+            Trip & Route Identification
           </h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-lg bg-slate-50 border border-slate-200">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-lg bg-slate-50 border border-slate-200">
             <div>
               <span className="text-slate-500 block text-[10px]">Sl.No</span>
-              <strong className="font-mono text-blue-700">#{trip.slNo}</strong>
+              <strong className="font-mono text-sm text-blue-700">#{trip.slNo}</strong>
             </div>
             <div>
-              <span className="text-slate-500 block text-[10px]">Date</span>
+              <span className="text-slate-500 block text-[10px]">Trip Date</span>
               <strong className="text-slate-900">{formatDate(trip.date)}</strong>
             </div>
             <div>
@@ -93,6 +93,17 @@ export const TripDetailModal = ({ trip, onClose }) => {
               </strong>
             </div>
             <div>
+              <span className="text-slate-500 block text-[10px] font-sans">Refund</span>
+              <strong className="text-blue-700">
+                {hasRefund(trip) ? formatCurrency(trip.refund) : "Blank (Pending)"}
+              </strong>
+              {trip.refundClearedAt && (
+                <span className="block text-[10px] text-blue-600 font-sans mt-0.5">
+                  Cleared: {formatDate(trip.refundClearedAt)}
+                </span>
+              )}
+            </div>
+            <div>
               <span className="text-slate-500 block text-[10px] font-sans">Commission (Agent)</span>
               <strong className="text-emerald-700">
                 {trip.commission !== null ? formatCurrency(trip.commission) : "Blank (Pending)"}
@@ -102,10 +113,6 @@ export const TripDetailModal = ({ trip, onClose }) => {
                   Comm Date: {formatDate(trip.commissionDueDate)}
                 </span>
               )}
-            </div>
-            <div>
-              <span className="text-slate-500 block text-[10px] font-sans">Difference Amount</span>
-              <strong className="text-blue-700">{formatCurrency(diffAmount)}</strong>
             </div>
             <div>
               <span className="text-slate-500 block text-[10px] font-sans">Account Refund</span>

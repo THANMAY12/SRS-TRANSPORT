@@ -63,6 +63,18 @@ export function isPendingBooking(t) {
   return !hasBooking(t);
 }
 
+export function hasRefund(t) {
+  if (!t) return false;
+  const r = t.refund;
+  if (r === null || r === undefined || r === "") return false;
+  const num = Number(r);
+  return !isNaN(num) && num >= 0;
+}
+
+export function isPendingRefund(t) {
+  return !hasRefund(t);
+}
+
 export function isBothToPay(t) {
   if (!t) return false;
   const advRecType = (t.advanceReceivedType || t.advance_received_type || "").trim();
@@ -71,10 +83,8 @@ export function isBothToPay(t) {
 }
 
 export function getTripDifferenceAmount(t) {
-  if (!t || !hasBooking(t)) return 0;
-  const booking = Number(t.booking) || 0;
-  const freight = Number(t.freight) || 0;
-  return isBothToPay(t) ? booking - freight : 0;
+  if (!t) return 0;
+  return hasRefund(t) ? Number(t.refund) : 0;
 }
 
 export function getTripAccountRefund(t) {
@@ -86,9 +96,33 @@ export function getTripAccountRefund(t) {
 
 export function getTripGrossIncome(t) {
   if (!t) return 0;
+  const refund = hasRefund(t) ? Number(t.refund) : 0;
   const commission = Number(t.commission) || 0;
-  if (!hasBooking(t)) return commission;
-  return getTripDifferenceAmount(t) + commission;
+  return refund + commission;
+}
+
+export function getLocalDateString(dateInput) {
+  if (!dateInput) return "";
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) {
+    return typeof dateInput === "string" ? dateInput.substring(0, 10) : "";
+  }
+  // Convert to Indian Standard Time (Asia/Kolkata) formatted as YYYY-MM-DD
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}
+
+export function getTripReportDate(t) {
+  if (!t) return "";
+  const clearedAt = t.refundClearedAt || t.refund_cleared_at;
+  if (clearedAt) {
+    return getLocalDateString(clearedAt);
+  }
+  return t.date || "";
 }
 
 export function mapTripDoc(doc) {
@@ -105,6 +139,8 @@ export function mapTripDoc(doc) {
     freight: obj.freight,
     transport: obj.transport,
     booking: obj.booking,
+    refund: obj.refund !== undefined && obj.refund !== null ? obj.refund : null,
+    refundClearedAt: obj.refund_cleared_at || null,
     commission: obj.commission,
     commissionReceivedType: obj.commission_received_type || "",
     advanceReceivedAmount: obj.advance_received_amount,
@@ -221,6 +257,16 @@ export async function createTrip(body, user) {
     throw new Error("Commission Received Type is required when Commission is entered.");
   }
 
+  const rawRefund = body.refund;
+  const refund =
+    rawRefund !== null &&
+    rawRefund !== undefined &&
+    rawRefund !== "" &&
+    !isNaN(Number(rawRefund)) &&
+    Number(rawRefund) >= 0
+      ? Number(rawRefund)
+      : null;
+
   const advanceReceivedAmount = Number(body.advanceReceivedAmount) || 0;
   const advanceReceivedType = body.advanceReceivedType || "";
   const advancePaidAmount = Number(body.advancePaidAmount) || 0;
@@ -238,6 +284,8 @@ export async function createTrip(body, user) {
     freight,
     transport: body.transport.trim(),
     booking,
+    refund,
+    refund_cleared_at: null,
     commission,
     commission_received_type: commissionReceivedType,
     advance_received_amount: advanceReceivedAmount,
@@ -386,6 +434,18 @@ export async function updateTrip(id, body, user) {
       ? body.collectionDueDate
       : existingTrip.collectionDueDate || existingTrip.date;
 
+  const rawRefund = body.refund;
+  const updatedRefund =
+    rawRefund !== undefined
+      ? rawRefund === null || rawRefund === "" || isNaN(Number(rawRefund)) || Number(rawRefund) < 0
+        ? null
+        : Number(rawRefund)
+      : existingTrip.refund;
+
+  // Preserve existing refundClearedAt if refund is still present; reset to null if refund cleared to null
+  const updatedRefundClearedAt =
+    updatedRefund === null ? null : existingTrip.refundClearedAt || null;
+
   const now = new Date().toISOString();
 
   await Trip.updateOne(
@@ -400,6 +460,8 @@ export async function updateTrip(id, body, user) {
       freight: updatedFreight,
       transport: updatedTransport,
       booking: updatedBooking,
+      refund: updatedRefund,
+      refund_cleared_at: updatedRefundClearedAt,
       commission: updatedCommission,
       commission_received_type: updatedCommissionReceivedType,
       advance_received_amount: updatedAdvRecAmt,
@@ -704,6 +766,62 @@ export async function rejectTrip(id, reason, user) {
     id,
     existingTrip.approvalStatus || "Pending",
     `Rejected Trip Sl.No ${existingTrip.slNo} (${existingTrip.vehicleNumber}) by ${user.username}. Reason: ${trimmedReason}`
+  );
+
+  return updatedTrip;
+}
+
+export async function getPendingRefundTrips() {
+  const trips = await Trip.find({
+    $or: [{ refund: null }, { refund: { $exists: false } }],
+  })
+    .sort({ date: -1, sl_no: -1 })
+    .lean();
+  return trips.map(mapTripDoc);
+}
+
+export async function setTripRefund(id, refundAmount, user) {
+  const existingTrip = await getTripById(id);
+  if (!existingTrip) {
+    throw new Error("Trip not found");
+  }
+
+  let numRefund = null;
+  if (
+    refundAmount !== null &&
+    refundAmount !== undefined &&
+    refundAmount !== "" &&
+    !isNaN(Number(refundAmount)) &&
+    Number(refundAmount) >= 0
+  ) {
+    numRefund = Number(refundAmount);
+  } else if (refundAmount !== null && refundAmount !== undefined && refundAmount !== "") {
+    throw new Error("Refund amount must be a valid non-negative number.");
+  }
+
+  const now = new Date().toISOString();
+  const updatedRefundClearedAt = numRefund !== null ? now : null;
+  await Trip.updateOne(
+    { id },
+    {
+      refund: numRefund,
+      refund_cleared_at: updatedRefundClearedAt,
+      updated_at: now,
+      updated_by: user.username,
+    }
+  );
+
+  const updatedTrip = await getTripById(id);
+
+  await addAuditLog(
+    user.username,
+    user.role,
+    "UPDATE_REFUND",
+    id,
+    existingTrip.refund !== null && existingTrip.refund !== undefined
+      ? `Previous Refund: ₹${existingTrip.refund}`
+      : "Previous Refund: Pending",
+    numRefund !== null ? `Entered Refund: ₹${numRefund}` : "Refund set to Pending"
   );
 
   return updatedTrip;

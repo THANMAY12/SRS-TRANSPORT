@@ -4,6 +4,7 @@ import {
   AlertCircle,
   ReceiptText,
   Clock,
+  Banknote,
   Truck,
   Building2,
   Scale,
@@ -48,6 +49,15 @@ export const NotificationDrawer = ({ isOpen, onClose, stats, onNavigatePage }) =
       icon: Clock,
       border: "border-amber-200 bg-amber-50/50 hover:bg-amber-50 text-amber-900",
       page: "pending-commission",
+    },
+    {
+      id: "pending-refunds",
+      title: "Pending refund entries",
+      count: stats?.pendingRefundsCount || 0,
+      description: "Trips missing refund amount entry",
+      icon: Banknote,
+      border: "border-amber-200 bg-amber-50/50 hover:bg-amber-50 text-amber-900",
+      page: "pending-refunds",
     },
     {
       id: "pending-vehicle-advance",

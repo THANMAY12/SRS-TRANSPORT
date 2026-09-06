@@ -13,6 +13,7 @@ export const EditTripModal = ({ trip, onClose, onSave }) => {
     freight: "",
     transport: "",
     booking: "",
+    refund: "",
     commission: "",
     commissionReceivedType: "",
     advanceReceivedAmount: "",
@@ -37,6 +38,7 @@ export const EditTripModal = ({ trip, onClose, onSave }) => {
         freight: trip.freight !== undefined && trip.freight !== null ? String(trip.freight) : "",
         transport: trip.transport || "",
         booking: trip.booking !== undefined && trip.booking !== null ? String(trip.booking) : "",
+        refund: trip.refund !== null && trip.refund !== undefined ? String(trip.refund) : "",
         commission:
           trip.commission !== null && trip.commission !== undefined ? String(trip.commission) : "",
         commissionReceivedType: trip.commissionReceivedType || "",
@@ -121,6 +123,14 @@ export const EditTripModal = ({ trip, onClose, onSave }) => {
           formData.booking !== undefined &&
           !isNaN(Number(formData.booking))
             ? Number(formData.booking)
+            : null,
+        refund:
+          formData.refund !== "" &&
+          formData.refund !== null &&
+          formData.refund !== undefined &&
+          !isNaN(Number(formData.refund)) &&
+          Number(formData.refund) >= 0
+            ? Number(formData.refund)
             : null,
         commission: formData.commission !== "" ? Number(formData.commission) : null,
         commissionReceivedType: formData.commissionReceivedType,
@@ -294,9 +304,9 @@ export const EditTripModal = ({ trip, onClose, onSave }) => {
           {/* Section 2: Freight & Commission */}
           <div className="space-y-2">
             <h4 className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider">
-              2. Freight & Commission Amounts
+              2. Freight, Refund & Commission Amounts
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <div>
                 <label
                   htmlFor="edit_freight"
@@ -327,6 +337,24 @@ export const EditTripModal = ({ trip, onClose, onSave }) => {
                   min="0"
                   value={formData.booking}
                   onChange={(e) => setFormData({ ...formData, booking: e.target.value })}
+                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold font-mono focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="edit_refund"
+                  className="block text-[11px] font-semibold text-slate-600 uppercase mb-1"
+                >
+                  Refund (₹) [Blank = Pending]
+                </label>
+                <input
+                  id="edit_refund"
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 1000 or 0"
+                  value={formData.refund}
+                  onChange={(e) => setFormData({ ...formData, refund: e.target.value })}
                   className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold font-mono focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white"
                 />
               </div>

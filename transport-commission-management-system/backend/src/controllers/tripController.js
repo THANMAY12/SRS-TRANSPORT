@@ -252,3 +252,24 @@ export const rejectTrip = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getPendingRefundTrips = async (req, res, next) => {
+  try {
+    const trips = await tripService.getPendingRefundTrips();
+    res.json(trips);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const setTripRefund = async (req, res, next) => {
+  try {
+    const refund = req.body?.refund !== undefined ? req.body.refund : null;
+    const updatedTrip = await tripService.setTripRefund(req.params.id, refund, req.user);
+    res.json(updatedTrip);
+  } catch (error) {
+    if (error.message === "Trip not found") res.status(404);
+    else if (error.message.startsWith("Refund amount must be")) res.status(400);
+    next(error);
+  }
+};

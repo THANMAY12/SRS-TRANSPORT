@@ -16,6 +16,7 @@ import { ReportsPage } from "./pages/ReportsPage";
 import { AuditLogPage } from "./pages/AuditLogPage";
 import { ManageWorkersPage } from "./pages/ManageWorkersPage";
 import { PendingApprovalsPage } from "./pages/PendingApprovalsPage";
+import { PendingRefundsPage } from "./pages/PendingRefundsPage";
 import { LoginModal } from "./pages/LoginModal";
 import { NotificationDrawer } from "./layouts/NotificationDrawer";
 import { api } from "./services/api";
@@ -226,6 +227,16 @@ function MainLayout() {
                   onUpdateTrip={handleUpdateTrip}
                   globalSearch={globalSearch}
                   setGlobalSearch={setGlobalSearch}
+                />
+              }
+            />
+            <Route
+              path="/pending-refunds"
+              element={
+                <PendingRefundsPage
+                  globalSearch={globalSearch}
+                  setGlobalSearch={setGlobalSearch}
+                  onTripUpdated={fetchData}
                 />
               }
             />

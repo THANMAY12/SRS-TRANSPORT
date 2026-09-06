@@ -4,6 +4,7 @@ import {
   FilePlus,
   ReceiptText,
   Clock,
+  Banknote,
   Truck,
   Building2,
   Scale,
@@ -52,6 +53,13 @@ export const Sidebar = ({ activePage, setActivePage, stats, isOpen, setIsOpen })
           label: "Pending commission",
           icon: Clock,
           badge: stats?.pendingCommissionCount || 0,
+          badgeColor: "bg-amber-50 text-amber-700 border border-amber-200",
+        },
+        {
+          id: "pending-refunds",
+          label: "Pending refunds",
+          icon: Banknote,
+          badge: stats?.pendingRefundsCount || 0,
           badgeColor: "bg-amber-50 text-amber-700 border border-amber-200",
         },
         {

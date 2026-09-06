@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { CheckCircle2, XCircle, Eye, Edit2 } from "lucide-react";
+import { Banknote, Eye, Edit2 } from "lucide-react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { DataTable } from "../components/ui/DataTable";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { Toast } from "../components/ui/Toast";
-import { ConfirmModal } from "../components/ui/ConfirmModal";
 import { TripDetailModal } from "../components/modals/TripDetailModal";
 import { EditTripModal } from "../components/modals/EditTripModal";
-import { RejectTripModal } from "../components/modals/RejectTripModal";
-import { formatCurrency, formatDate, hasBooking, hasRefund } from "../lib/utils";
+import { EnterRefundModal } from "../components/modals/EnterRefundModal";
+import { formatCurrency, formatDate, hasBooking } from "../lib/utils";
 import { api } from "../services/api";
 
-export const PendingApprovalsPage = ({
+export const PendingRefundsPage = ({
   globalSearch = "",
   setGlobalSearch = () => {},
-  onTripApprovedOrRejected = () => {},
+  onTripUpdated = () => {},
 }) => {
   const [pendingTrips, setPendingTrips] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,20 +22,17 @@ export const PendingApprovalsPage = ({
   // Modals state
   const [viewTrip, setViewTrip] = useState(null);
   const [editTrip, setEditTrip] = useState(null);
-  const [approveConfirmTrip, setApproveConfirmTrip] = useState(null);
-  const [isApproving, setIsApproving] = useState(false);
-  const [rejectTrip, setRejectTrip] = useState(null);
+  const [enterRefundTrip, setEnterRefundTrip] = useState(null);
 
-  const fetchPendingApprovals = useCallback(async () => {
+  const fetchPendingRefunds = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await api.getPendingApprovals();
+      const data = await api.getPendingRefundTrips();
       setPendingTrips(Array.isArray(data) ? data : []);
     } catch (err) {
       setToast({
         type: "error",
-        message:
-          err?.response?.data?.message || err?.message || "Failed to load pending approvals.",
+        message: err?.response?.data?.message || err?.message || "Failed to load pending refunds.",
       });
     } finally {
       setIsLoading(false);
@@ -44,56 +40,30 @@ export const PendingApprovalsPage = ({
   }, []);
 
   useEffect(() => {
-    fetchPendingApprovals();
-  }, [fetchPendingApprovals]);
+    fetchPendingRefunds();
+  }, [fetchPendingRefunds]);
 
   // Handle Edit Save
   const handleSaveEdit = async (id, payload) => {
     await api.updateTrip(id, payload);
     setToast({
       type: "success",
-      message: `Trip #${payload.slNo} updated successfully and remains Pending approval.`,
+      message: `Trip #${payload.slNo} updated successfully.`,
     });
-    await fetchPendingApprovals();
-    if (onTripApprovedOrRejected) onTripApprovedOrRejected();
+    await fetchPendingRefunds();
+    if (onTripUpdated) onTripUpdated();
   };
 
-  // Handle Approve Confirm
-  const handleApproveConfirmed = async () => {
-    if (!approveConfirmTrip) return;
-    setIsApproving(true);
-    try {
-      await api.approveTrip(approveConfirmTrip.id);
-      setToast({
-        type: "success",
-        message: `Daily Entry #${approveConfirmTrip.slNo} (${approveConfirmTrip.vehicleNumber}) approved successfully!`,
-      });
-      setApproveConfirmTrip(null);
-      await fetchPendingApprovals();
-      if (onTripApprovedOrRejected) onTripApprovedOrRejected();
-    } catch (err) {
-      setToast({
-        type: "error",
-        message:
-          err?.response?.data?.message ||
-          err?.message ||
-          "Failed to approve daily entry. Please try again.",
-      });
-    } finally {
-      setIsApproving(false);
-    }
-  };
-
-  // Handle Reject
-  const handleReject = async (id, reason) => {
-    await api.rejectTrip(id, reason);
+  // Handle Enter Refund Save
+  const handleSaveRefund = async (id, refundAmount) => {
+    await api.enterTripRefund(id, refundAmount);
     setToast({
       type: "success",
-      message: `Daily Entry #${rejectTrip?.slNo} rejected.`,
+      message: `Refund of ₹${refundAmount} saved for Trip #${enterRefundTrip?.slNo}! It will now appear in Financial Reports.`,
     });
-    setRejectTrip(null);
-    await fetchPendingApprovals();
-    if (onTripApprovedOrRejected) onTripApprovedOrRejected();
+    setEnterRefundTrip(null);
+    await fetchPendingRefunds();
+    if (onTripUpdated) onTripUpdated();
   };
 
   // Filter pending trips
@@ -121,11 +91,9 @@ export const PendingApprovalsPage = ({
     { title: "Freight" },
     { title: "Transport" },
     { title: "Booking" },
-    { title: "Refund" },
     { title: "Commission" },
-    { title: "Comm Type" },
     { title: "Submitted By" },
-    { title: "Status" },
+    { title: "Refund Status" },
     { title: "Actions", align: "center" },
   ];
 
@@ -133,24 +101,24 @@ export const PendingApprovalsPage = ({
     <div className="space-y-5">
       {/* Page Header */}
       <PageHeader
-        badgeText="Admin Approval Queue"
-        title={`Pending Approvals (${pendingTrips.length})`}
-        subtitle="Review and authorize daily transport entries created by workers before settlement."
-        searchPlaceholder="Search Sl.No, Vehicle, Submitted By..."
+        badgeText="Operational Queue"
+        title={`Pending Refunds (${pendingTrips.length})`}
+        subtitle="Trips where the Refund amount has not yet been entered. Enter ₹0 or the actual refund amount to include in Financial Reports."
+        searchPlaceholder="Search Sl.No, Vehicle, Transport..."
         searchValue={globalSearch}
         onSearchChange={setGlobalSearch}
-        printId="pending-approvals-print-btn"
+        printId="pending-refunds-print-btn"
       />
 
       {/* Toast Notification */}
       {toast && <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />}
 
-      {/* Approvals Table */}
+      {/* Table */}
       <DataTable
         columns={columns}
         data={filteredTrips}
         isLoading={isLoading}
-        emptyMessage="No pending trip approvals. All daily entries have been processed."
+        emptyMessage="No pending refunds found. All trip records have had their refund amounts entered."
         renderRow={(t) => (
           <tr key={t.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100">
             <td className="py-2.5 px-3.5 font-mono font-bold text-blue-700">#{t.slNo}</td>
@@ -174,13 +142,6 @@ export const PendingApprovalsPage = ({
                 <StatusBadge type="pending-advance-company" text="Blank" size="sm" />
               )}
             </td>
-            <td className="py-2.5 px-3.5 font-mono text-slate-600">
-              {hasRefund(t) ? (
-                formatCurrency(t.refund)
-              ) : (
-                <StatusBadge type="pending-advance-driver" text="Pending" size="sm" />
-              )}
-            </td>
             <td className="py-2.5 px-3.5 font-mono font-semibold text-slate-900">
               {t.commission !== null && t.commission !== undefined ? (
                 formatCurrency(t.commission)
@@ -189,20 +150,23 @@ export const PendingApprovalsPage = ({
               )}
             </td>
             <td className="py-2.5 px-3.5">
-              {t.commissionReceivedType ? (
-                <StatusBadge type="cash" text={t.commissionReceivedType} size="sm" />
-              ) : (
-                <span className="text-slate-400 text-[11px]">-</span>
-              )}
-            </td>
-            <td className="py-2.5 px-3.5">
               <span className="font-medium text-slate-700">{t.createdBy || "System"}</span>
             </td>
             <td className="py-2.5 px-3.5">
-              <StatusBadge type="pending-approval" text="Pending" size="sm" />
+              <StatusBadge type="pending" text="Pending Refund" size="sm" />
             </td>
             <td className="py-2.5 px-3.5 text-center whitespace-nowrap">
               <div className="flex items-center justify-center gap-1.5">
+                {/* Enter Refund Button */}
+                <button
+                  onClick={() => setEnterRefundTrip(t)}
+                  className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] flex items-center gap-1 shadow-xs transition-colors"
+                  title="Enter Refund Amount"
+                >
+                  <Banknote className="h-3.5 w-3.5" />
+                  <span>Enter Refund</span>
+                </button>
+
                 {/* View Button */}
                 <button
                   onClick={() => setViewTrip(t)}
@@ -220,26 +184,6 @@ export const PendingApprovalsPage = ({
                 >
                   <Edit2 className="h-4 w-4" />
                 </button>
-
-                {/* Approve Button */}
-                <button
-                  onClick={() => setApproveConfirmTrip(t)}
-                  className="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] flex items-center gap-1 shadow-xs transition-colors"
-                  title="Approve Daily Entry"
-                >
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>Approve</span>
-                </button>
-
-                {/* Reject Button */}
-                <button
-                  onClick={() => setRejectTrip(t)}
-                  className="px-2 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white font-semibold text-[11px] flex items-center gap-1 shadow-xs transition-colors"
-                  title="Reject Daily Entry"
-                >
-                  <XCircle className="h-3.5 w-3.5" />
-                  <span>Reject</span>
-                </button>
               </div>
             </td>
           </tr>
@@ -254,24 +198,12 @@ export const PendingApprovalsPage = ({
         <EditTripModal trip={editTrip} onClose={() => setEditTrip(null)} onSave={handleSaveEdit} />
       )}
 
-      {/* Approve Confirmation Modal */}
-      <ConfirmModal
-        isOpen={!!approveConfirmTrip}
-        onClose={() => setApproveConfirmTrip(null)}
-        onConfirm={handleApproveConfirmed}
-        title={`Approve Daily Entry #${approveConfirmTrip?.slNo}?`}
-        message={`Are you sure you want to approve Daily Entry Sl.No #${approveConfirmTrip?.slNo} (${approveConfirmTrip?.vehicleNumber} - ${approveConfirmTrip?.fromLocation} → ${approveConfirmTrip?.toLocation})?`}
-        confirmLabel="Approve Entry"
-        isDanger={false}
-        isLoading={isApproving}
-      />
-
-      {/* Reject Modal */}
-      {rejectTrip && (
-        <RejectTripModal
-          trip={rejectTrip}
-          onClose={() => setRejectTrip(null)}
-          onReject={handleReject}
+      {/* Enter Refund Modal */}
+      {enterRefundTrip && (
+        <EnterRefundModal
+          trip={enterRefundTrip}
+          onClose={() => setEnterRefundTrip(null)}
+          onSave={handleSaveRefund}
         />
       )}
     </div>

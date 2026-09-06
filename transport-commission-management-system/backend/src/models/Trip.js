@@ -18,6 +18,8 @@ const tripSchema = new mongoose.Schema({
   advance_paid_amount: { type: Number, default: 0 },
   advance_paid_type: { type: String, default: "" },
   remarks: { type: String, default: "" },
+  refund: { type: Number, default: null },
+  refund_cleared_at: { type: String, default: null },
   commission_due_date: { type: String },
   advance_due_date: { type: String },
   collection_due_date: { type: String },
