@@ -97,6 +97,7 @@ export const api = {
   getBalanceVehicleTrips: () => request("/api/trips/balance-vehicle"),
   getBalanceCompanyTrips: () => request("/api/trips/balance-company"),
   getCompletedTrips: () => request("/api/trips/completed"),
+  getPendingApprovals: () => request("/api/trips/pending-approvals"),
 
   createTrip: (tripData) =>
     request("/api/trips", {
@@ -108,6 +109,17 @@ export const api = {
     request(`/api/trips/${id}`, {
       method: "PUT",
       body: JSON.stringify(tripData),
+    }),
+
+  approveTrip: (id) =>
+    request(`/api/trips/${id}/approve`, {
+      method: "PATCH",
+    }),
+
+  rejectTrip: (id, reason) =>
+    request(`/api/trips/${id}/reject`, {
+      method: "PATCH",
+      body: JSON.stringify({ reason }),
     }),
 
   clearVehicleBalance: (id, amountToClear, clearedDate, remarks) => {

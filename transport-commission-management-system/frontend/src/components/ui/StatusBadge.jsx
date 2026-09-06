@@ -10,6 +10,7 @@ export const StatusBadge = ({ type, text, size = "md" }) => {
     case "pending-advance-vehicle":
     case "pending-advance-company":
     case "pending":
+    case "pending-approval":
       colorClasses = "bg-amber-50 text-amber-800 border-amber-200 font-medium";
       break;
     case "balance-vehicle":
@@ -20,10 +21,12 @@ export const StatusBadge = ({ type, text, size = "md" }) => {
     case "completed":
     case "cleared":
     case "active":
+    case "approved":
       colorClasses = "bg-emerald-50 text-emerald-800 border-emerald-200 font-medium";
       break;
     case "disabled":
     case "error":
+    case "rejected":
       colorClasses = "bg-rose-50 text-rose-800 border-rose-200 font-medium";
       break;
     case "admin":

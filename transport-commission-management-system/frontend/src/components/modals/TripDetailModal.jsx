@@ -200,6 +200,48 @@ export const TripDetailModal = ({ trip, onClose }) => {
           </div>
         </div>
 
+        {/* Section 5: Approval Workflow Status */}
+        <div>
+          <h4 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+            Approval Workflow Status
+          </h4>
+          <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500 text-[10px]">Status:</span>
+              <StatusBadge
+                type={
+                  trip.approvalStatus === "Approved"
+                    ? "approved"
+                    : trip.approvalStatus === "Rejected"
+                      ? "rejected"
+                      : "pending-approval"
+                }
+                text={trip.approvalStatus || "Pending"}
+                size="sm"
+              />
+            </div>
+            {trip.approvalStatus === "Approved" && trip.approvedBy && (
+              <p className="text-[11px] text-slate-600">
+                Approved by <strong className="text-slate-800">{trip.approvedBy}</strong>
+                {trip.approvedAt && ` on ${formatDate(trip.approvedAt)}`}
+              </p>
+            )}
+            {trip.approvalStatus === "Rejected" && (
+              <div className="text-[11px] text-rose-700 bg-rose-50 p-2 rounded border border-rose-100 space-y-0.5">
+                <p>
+                  Rejected by <strong>{trip.rejectedBy || "Admin"}</strong>
+                  {trip.rejectedAt && ` on ${formatDate(trip.rejectedAt)}`}
+                </p>
+                {trip.rejectionReason && (
+                  <p>
+                    Reason: <em>&ldquo;{trip.rejectionReason}&rdquo;</em>
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Status Summary & Remarks */}
         <div className="flex items-center justify-between pt-3 border-t border-slate-200">
           <div>

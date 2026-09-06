@@ -217,3 +217,38 @@ export const deleteTrip = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getPendingApprovalTrips = async (req, res, next) => {
+  try {
+    const trips = await tripService.getPendingApprovalTrips();
+    res.json(trips);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const approveTrip = async (req, res, next) => {
+  try {
+    const updatedTrip = await tripService.approveTrip(req.params.id, req.user);
+    res.json(updatedTrip);
+  } catch (error) {
+    if (error.message === "Trip not found") res.status(404);
+    next(error);
+  }
+};
+
+export const rejectTrip = async (req, res, next) => {
+  try {
+    const reason = req.body?.reason || req.body?.rejectionReason || "";
+    if (typeof reason !== "string" || !reason.trim()) {
+      res.status(400);
+      throw new Error("Rejection reason is required.");
+    }
+    const updatedTrip = await tripService.rejectTrip(req.params.id, reason, req.user);
+    res.json(updatedTrip);
+  } catch (error) {
+    if (error.message === "Trip not found") res.status(404);
+    else if (error.message === "Rejection reason is required.") res.status(400);
+    next(error);
+  }
+};

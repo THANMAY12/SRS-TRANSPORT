@@ -34,6 +34,7 @@ export async function getDashboardStats() {
   const balanceCompanyCount = allTrips.filter(isBalanceCompanyActive).length;
 
   const completedTripsTodayCount = todayTrips.filter(isCompletedTrip).length;
+  const pendingApprovalsCount = allTrips.filter((t) => t.approvalStatus === "Pending").length;
 
   return {
     todayVehiclesCount,
@@ -46,6 +47,7 @@ export async function getDashboardStats() {
     balanceVehicleCount,
     balanceCompanyCount,
     completedTripsTodayCount,
+    pendingApprovalsCount,
   };
 }
 

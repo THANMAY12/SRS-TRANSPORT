@@ -15,6 +15,7 @@ import { CompletedTripsPage } from "./pages/CompletedTripsPage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { AuditLogPage } from "./pages/AuditLogPage";
 import { ManageWorkersPage } from "./pages/ManageWorkersPage";
+import { PendingApprovalsPage } from "./pages/PendingApprovalsPage";
 import { LoginModal } from "./pages/LoginModal";
 import { NotificationDrawer } from "./layouts/NotificationDrawer";
 import { api } from "./services/api";
@@ -139,6 +140,10 @@ function MainLayout() {
     "audit-logs": {
       title: "System audit trail",
       subtitle: "Complete history of user actions and database events",
+    },
+    "pending-approvals": {
+      title: "Pending Approvals",
+      subtitle: "Review and authorize daily transport trip entries",
     },
     "manage-workers": {
       title: "Manage workers & credentials",
@@ -279,6 +284,18 @@ function MainLayout() {
               }
             />
             <Route path="/reports" element={<ReportsPage />} />
+            {user?.role === "ADMIN" && (
+              <Route
+                path="/pending-approvals"
+                element={
+                  <PendingApprovalsPage
+                    globalSearch={globalSearch}
+                    setGlobalSearch={setGlobalSearch}
+                    onTripApprovedOrRejected={fetchData}
+                  />
+                }
+              />
+            )}
             {user?.role === "ADMIN" && <Route path="/audit-logs" element={<AuditLogPage />} />}
             {user?.role === "ADMIN" && (
               <Route path="/manage-workers" element={<ManageWorkersPage />} />

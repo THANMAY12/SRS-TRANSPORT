@@ -9,12 +9,28 @@ import {
   Scale,
   Landmark,
   ArrowRight,
+  ClipboardCheck,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export const NotificationDrawer = ({ isOpen, onClose, stats, onNavigatePage }) => {
+  const { user } = useAuth();
   if (!isOpen) return null;
 
   const queues = [
+    ...(user?.role === "ADMIN" && (stats?.pendingApprovalsCount || 0) > 0
+      ? [
+          {
+            id: "pending-approvals",
+            title: "Pending Daily Entry approvals",
+            count: stats?.pendingApprovalsCount || 0,
+            description: "Daily entries awaiting Admin authorization",
+            icon: ClipboardCheck,
+            border: "border-blue-200 bg-blue-50/50 hover:bg-blue-50 text-blue-900",
+            page: "pending-approvals",
+          },
+        ]
+      : []),
     {
       id: "pending-booking",
       title: "Pending booking entries",

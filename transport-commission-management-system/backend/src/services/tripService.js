@@ -123,6 +123,12 @@ export function mapTripDoc(doc) {
     updatedAt: obj.updated_at,
     createdBy: obj.created_by,
     updatedBy: obj.updated_by,
+    approvalStatus: obj.approval_status || "Pending",
+    approvedBy: obj.approved_by || "",
+    approvedAt: obj.approved_at || "",
+    rejectedBy: obj.rejected_by || "",
+    rejectedAt: obj.rejected_at || "",
+    rejectionReason: obj.rejection_reason || "",
   };
 }
 
@@ -248,6 +254,12 @@ export async function createTrip(body, user) {
     updated_at: now,
     created_by: user.username,
     updated_by: user.username,
+    approval_status: "Pending",
+    approved_by: "",
+    approved_at: "",
+    rejected_by: "",
+    rejected_at: "",
+    rejection_reason: "",
   });
 
   const createdTrip = await getTripById(tripId);
@@ -613,4 +625,86 @@ export async function deleteTrip(id, user) {
     JSON.stringify(trip),
     "TRIP_DELETED"
   );
+}
+
+export async function getPendingApprovalTrips() {
+  const trips = await Trip.find({
+    $or: [{ approval_status: "Pending" }, { approval_status: { $exists: false } }],
+  })
+    .sort({ date: -1, sl_no: -1 })
+    .lean();
+  return trips.map(mapTripDoc);
+}
+
+export async function approveTrip(id, user) {
+  const existingTrip = await getTripById(id);
+  if (!existingTrip) {
+    throw new Error("Trip not found");
+  }
+
+  const now = new Date().toISOString();
+  await Trip.updateOne(
+    { id },
+    {
+      approval_status: "Approved",
+      approved_by: user.username,
+      approved_at: now,
+      rejected_by: "",
+      rejected_at: "",
+      rejection_reason: "",
+      updated_at: now,
+      updated_by: user.username,
+    }
+  );
+
+  const updatedTrip = await getTripById(id);
+
+  await addAuditLog(
+    user.username,
+    user.role,
+    "APPROVED",
+    id,
+    existingTrip.approvalStatus || "Pending",
+    `Approved Trip Sl.No ${existingTrip.slNo} (${existingTrip.vehicleNumber}) by ${user.username}`
+  );
+
+  return updatedTrip;
+}
+
+export async function rejectTrip(id, reason, user) {
+  if (!reason || !String(reason).trim()) {
+    throw new Error("Rejection reason is required.");
+  }
+
+  const existingTrip = await getTripById(id);
+  if (!existingTrip) {
+    throw new Error("Trip not found");
+  }
+
+  const trimmedReason = String(reason).trim();
+  const now = new Date().toISOString();
+  await Trip.updateOne(
+    { id },
+    {
+      approval_status: "Rejected",
+      rejected_by: user.username,
+      rejected_at: now,
+      rejection_reason: trimmedReason,
+      updated_at: now,
+      updated_by: user.username,
+    }
+  );
+
+  const updatedTrip = await getTripById(id);
+
+  await addAuditLog(
+    user.username,
+    user.role,
+    "REJECTED",
+    id,
+    existingTrip.approvalStatus || "Pending",
+    `Rejected Trip Sl.No ${existingTrip.slNo} (${existingTrip.vehicleNumber}) by ${user.username}. Reason: ${trimmedReason}`
+  );
+
+  return updatedTrip;
 }

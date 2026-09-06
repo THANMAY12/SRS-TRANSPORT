@@ -7,11 +7,11 @@ export const applySecurityMiddleware = (app) => {
   app.use(helmet());
 
   const allowedOrigins = [
-  ...config.frontendUrl.split(",").map((url) => url.trim()),
-  "http://localhost:5173",
-  "http://localhost:3000",
-  "http://127.0.0.1:5173",
-].filter(Boolean);
+    ...config.frontendUrl.split(",").map((url) => url.trim()),
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+  ].filter(Boolean);
 
   const corsOptions = {
     origin: (origin, callback) => {

@@ -29,6 +29,16 @@ const tripSchema = new mongoose.Schema({
   updated_at: { type: String, required: true },
   created_by: { type: String, required: true },
   updated_by: { type: String, required: true },
+  approval_status: {
+    type: String,
+    enum: ["Pending", "Approved", "Rejected"],
+    default: "Pending",
+  },
+  approved_by: { type: String, default: "" },
+  approved_at: { type: String, default: "" },
+  rejected_by: { type: String, default: "" },
+  rejected_at: { type: String, default: "" },
+  rejection_reason: { type: String, default: "" },
 });
 
 tripSchema.index({ date: 1, sl_no: 1 }, { unique: true });

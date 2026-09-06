@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Users,
   LogOut,
+  ClipboardCheck,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 export const Sidebar = ({ activePage, setActivePage, stats, isOpen, setIsOpen }) => {
@@ -112,14 +113,23 @@ export const Sidebar = ({ activePage, setActivePage, stats, isOpen, setIsOpen })
     title: "Administration",
     items: [
       {
+        id: "pending-approvals",
+        label: "Pending approvals",
+        icon: ClipboardCheck,
+        badge: stats?.pendingApprovalsCount || 0,
+        badgeColor: "bg-amber-50 text-amber-700 border border-amber-200",
+      },
+      {
         id: "manage-workers",
         label: "Manage workers",
         icon: Users,
+        badge: null,
       },
       {
         id: "audit-logs",
         label: "System audit logs",
         icon: ShieldCheck,
+        badge: null,
       },
     ],
   };
@@ -244,6 +254,16 @@ export const Sidebar = ({ activePage, setActivePage, stats, isOpen, setIsOpen })
                         />
                         <span className="truncate">{item.label}</span>
                       </div>
+
+                      {item.badge !== null && item.badge > 0 && (
+                        <span
+                          className={`ml-2 px-2 py-0.5 rounded text-[10px] font-semibold ${
+                            item.badgeColor || "bg-slate-100 text-slate-600 border border-slate-200"
+                          }`}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
                     </button>
                   );
                 })}

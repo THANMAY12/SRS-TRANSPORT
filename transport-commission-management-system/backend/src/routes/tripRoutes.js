@@ -14,8 +14,11 @@ router.get("/pending-advance-company", tripController.getPendingAdvanceCompanyTr
 router.get("/balance-vehicle", tripController.getBalanceVehicleTrips);
 router.get("/balance-company", tripController.getBalanceCompanyTrips);
 router.get("/completed", tripController.getCompletedTrips);
+router.get("/pending-approvals", requireAdmin, tripController.getPendingApprovalTrips);
 router.put("/:id", tripController.updateTrip);
 router.delete("/:id", requireAdmin, tripController.deleteTrip);
+router.patch("/:id/approve", requireAdmin, tripController.approveTrip);
+router.patch("/:id/reject", requireAdmin, tripController.rejectTrip);
 router.post("/:id/clear-vehicle-balance", tripController.clearVehicleBalance);
 router.post("/:id/clear-company-balance", tripController.clearCompanyBalance);
 
